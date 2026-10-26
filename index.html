@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Street View Drive Sim</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="h-screen flex flex-col bg-slate-950 text-slate-100 font-sans text-sm">
+    <header class="bg-slate-900 border-b border-slate-800 shadow-lg">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+        <h1 class="text-base font-semibold tracking-tight text-sky-400">Drive Sim</h1>
+        <form id="route-form" class="flex flex-wrap items-center gap-2">
+          <input id="origin" placeholder="A · Origin (address or click map)" required
+            class="w-64 rounded-md bg-slate-800 border border-slate-700 px-3 py-1.5 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <input id="destination" placeholder="B · Destination" required
+            class="w-64 rounded-md bg-slate-800 border border-slate-700 px-3 py-1.5 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <button type="submit" class="rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-medium px-3 py-1.5 transition">Get routes</button>
+          <button type="button" id="clear-pins" title="Remove A/B pins" class="rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 transition">Clear pins</button>
+        </form>
+        <label hidden class="flex items-center gap-1.5 text-slate-400">Route
+        <select id="route-select" class="rounded-md bg-slate-800 border border-slate-700 px-2 py-1.5 text-slate-100"></select></label>
+        <label class="flex items-center gap-1.5 text-slate-400"         title="How far each view jump moves you. Shorter jumps look smoother but need more API calls. Applies on 'Drive this route'.">Jump distance
+        <select id="density"
+          class="rounded-md bg-slate-800 border border-slate-700 px-2 py-1.5 text-slate-100">
+                  <option value="10">10 m</option>
+                  <option value="25" selected>25 m</option>
+                  <option value="50">50 m</option>
+        </select></label>
+        <button id="drive" hidden class="rounded-md bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-medium px-3 py-1.5 transition">Drive this route</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-4 px-4 pb-3">
+        <div id="controls" class="flex items-center gap-2 rounded-lg bg-slate-800/80 border border-slate-700 px-3 py-1.5">
+          <button id="prev" title="Previous (←)" class="rounded-md px-2.5 py-1 hover:bg-slate-700 transition">Prev</button>
+          <button id="play" title="Play/Pause (Space)" class="w-16 rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-medium py-1 transition">Play</button>
+          <button id="next" title="Next (→)" class="rounded-md px-2.5 py-1 hover:bg-slate-700 transition">Next</button>
+          <label class="flex items-center gap-1.5 text-slate-400">Jumps per second
+          <select id="speed" title="How many view jumps happen each second" class="rounded-md bg-slate-900 border border-slate-700 px-2 py-1 text-slate-100">
+            <option value="125">1 per 8 s</option>
+            <option value="250">1 per 4 s</option>
+            <option value="500">1 per 2 s</option>
+            <option value="1000" selected>1 per s</option>
+            <option value="2000">2 per s</option>
+            <option value="4000">4 per s</option>
+          </select></label>
+          <input id="progress" type="range" min="0" max="0" value="0" class="w-56 md:w-80" />
+          <span id="progress-label" class="tabular-nums text-slate-400 min-w-16"></span>
+          <span id="speed-info" class="text-slate-300 min-w-20" title="Approximate travel speed = jump distance x jumps per second"></span>
+        </div>
+        <span id="status" class="flex-1 min-w-48 text-slate-400"></span>
+      </div>
+    </header>
+    <main class="flex-1 min-h-0 grid grid-cols-1 grid-rows-2 md:grid-rows-1 md:grid-cols-2 gap-1 p-1">
+      <div id="map" class="rounded-lg overflow-hidden bg-slate-900"></div>
+      <div id="pano" class="rounded-lg overflow-hidden bg-slate-900"></div>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
+

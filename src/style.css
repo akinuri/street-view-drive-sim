@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+#map, #pano { min-height: 0; height: 100%; }
+input[type="range"] { accent-color: #38bdf8; }
