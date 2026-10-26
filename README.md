@@ -44,3 +44,7 @@ Stack: Vite, plain JavaScript, Tailwind CSS v4.
 - Panoramas can be older imagery or user-contributed; the OUTDOOR source filter reduces but doesn't eliminate that.
 - Don't persist/cache panorama data beyond the session (Maps Platform terms).
 
+
+## Screenshot
+
+![Street View Drive Sim](./ss.png)
