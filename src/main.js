@@ -83,6 +83,7 @@ function showPano() {
 
 function setReady(ready) {
   for (const id of ["prev", "play", "next", "progress"]) $(id).disabled = !ready;
+  $("speed-info").hidden = !ready;
 }
 
 function updateSpeedInfo() {
