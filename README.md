@@ -43,6 +43,10 @@ The route is walked lazily: about 20 steps are loaded to start, and more load in
 
 Before a sharp turn, the camera rotates in place before moving to the next panorama, so the turn and the Street View transition don't overlap.
 
+## Deploying to GitHub Pages
+
+Pushing to `main` builds the app and publishes it via `.github/workflows/deploy.yml`. One-time setup: in the repo, go to Settings > Pages and set **Source** to **GitHub Actions**. Add `https://<user>.github.io/*` to the key's allowed HTTP referrers. Each visitor enters their own key in the app.
+
 ## Known limitations
 - Origin/destination can be typed addresses or map pins; no Places Autocomplete yet.
 - Links are followed greedily by heading; at complex intersections or with opposite carriageways close together it can still pick a wrong branch.
