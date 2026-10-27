@@ -23,6 +23,7 @@ let routes = [];
 let currentPano = "";
 let needZoom = false;
 let carIcon;
+let homeView = { center: { lat: 0, lng: 0 }, zoom: 2 };
 const pins = { origin: null, dest: null }; // google.maps.Marker or null
 
 function fmt(ll) { return `${ll.lat().toFixed(5)}, ${ll.lng().toFixed(5)}`; }
@@ -38,9 +39,34 @@ function setPin(kind, latLng) {
   input.value = fmt(latLng);
 }
 
-function clearPins() {
+/** Return the app to its initial state: pins, routes, playback, panorama and map marker. */
+function resetAll() {
+  abort?.abort();
+  previewToken++;
+  playback.load([]);
+  walker = null;
+  currentPano = "";
+  needZoom = false;
   for (const k of ["origin", "dest"]) { pins[k]?.setMap(null); pins[k] = null; }
   originEl.value = destEl.value = "";
+  polylines.forEach((p) => p.setMap(null));
+  polylines = [];
+  routes = [];
+  selectedRoute = 0;
+  routeSelect.innerHTML = "";
+  routeSelect.parentElement.hidden = true;
+  driveBtn.hidden = true;
+  setReady(false);
+  playBtn.textContent = "Play";
+  progressEl.max = "0";
+  progressEl.value = "0";
+  progressLabel.textContent = "";
+  marker.setPosition(null);
+  map.setCenter(homeView.center);
+  map.setZoom(homeView.zoom);
+  pano.setVisible(false);
+  $("pano-placeholder").hidden = false;
+  status("Click the map to drop start (A) and end (B) pins, or type addresses.");
 }
 
 /** A typed address overrides a pin; otherwise the pin's current position is used. */
@@ -132,15 +158,16 @@ async function init() {
   map.addListener("click", (e) => {
     if (!pins.origin) setPin("origin", e.latLng);
     else if (!pins.dest) setPin("dest", e.latLng);
-    else status("Both pins placed. Drag A or B to move them, or press Clear pins.");
+    else status("Both pins placed. Drag A or B to move them, or press Reset.");
     if (pins.origin && pins.dest) status("Press Get route.");
   });
   status("Click the map to drop start (A) and end (B) pins, or type addresses.");
   navigator.geolocation?.getCurrentPosition(
     (pos) => {
+      homeView = { center: { lat: pos.coords.latitude, lng: pos.coords.longitude }, zoom: 14 };
       if (routes.length) return;
-      map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      map.setZoom(14);
+      map.setCenter(homeView.center);
+      map.setZoom(homeView.zoom);
     },
     () => {},
     { timeout: 8000 }
@@ -266,7 +293,7 @@ form.addEventListener("submit", async (ev) => {
 
 routeSelect.addEventListener("change", () => selectRoute(Number(routeSelect.value)));
 driveBtn.addEventListener("click", () => prepare(selectedRoute));
-$("clear-pins").addEventListener("click", clearPins);
+$("clear-pins").addEventListener("click", resetAll);
 playBtn.addEventListener("click", () => playback.toggle());
 $("prev").addEventListener("click", () => { playback.pause(); playback.step(-1); });
 $("next").addEventListener("click", () => { playback.pause(); playback.step(1); });

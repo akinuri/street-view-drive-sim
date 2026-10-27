@@ -8,6 +8,7 @@ Pick a start and end, get Google driving routes, choose one, and "drive" it by s
 2. Press **Get routes**. All candidate routes are drawn; click one (or use the **Route** dropdown) to preview its first Street View.
 3. Choose **Jump distance** (how far each view jump moves you: every panorama, or 10/25/50 m; "Every panorama" gives the smoothest transitions; applies on "Drive this route") and **Jumps per second** (applies instantly). The `~ km/h` readout is jump distance x rate.
 4. Press **Drive this route**, then Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
+5. **Reset** clears pins, routes and the Street View, and returns the map to its starting view.
 
 ## Setup
 
