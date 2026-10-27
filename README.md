@@ -65,4 +65,4 @@ Pushing to `main` builds the app and publishes it via `.github/workflows/deploy.
 
 ## Screenshot
 
-![Street View Drive Sim](./ss.png)
+![Street View Drive Sim](./ss.jpg)
