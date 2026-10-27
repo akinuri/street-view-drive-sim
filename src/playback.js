@@ -5,10 +5,17 @@ export class Playback {
   index = 0;
   intervalMs = 1000;
   playing = false;
+  token = 0; // bumped on pause/seek/load to cancel an in-flight turn
+  turning = false;
 
-  /** @param onChange (index, step, playing) => void */
-  constructor(onChange) {
+  /**
+   * @param onChange (index, step, playing) => void
+   * @param turn optional async (from, to, isCancelled) => void, run in the current
+   *   panorama before jumping to the next one (used to rotate the camera first).
+   */
+  constructor(onChange, turn = null) {
     this.onChange = onChange;
+    this.turn = turn;
     this.hasMore = () => false; // true while more steps may still load
   }
 
@@ -33,6 +40,7 @@ export class Playback {
 
   pause() {
     this.playing = false;
+    this.token++;
     clearTimeout(this.timer);
     if (this.steps.length) this.emit();
   }
@@ -41,15 +49,35 @@ export class Playback {
 
   seek(i) {
     if (!this.steps.length) return;
+    this.token++;
     this.index = Math.max(0, Math.min(this.steps.length - 1, i));
     this.emit();
   }
 
-  step(delta) { this.seek(this.index + delta); }
+  step(delta) {
+    if (delta === 1) this.forward();
+    else this.seek(this.index + delta);
+  }
+
+  /** Move to the next step, first turning the camera in the current panorama if needed. */
+  async forward() {
+    const to = this.steps[this.index + 1];
+    if (!to || this.turning) return false;
+    const t = this.token;
+    if (this.turn) {
+      this.turning = true;
+      try { await this.turn(this.steps[this.index], to, () => t !== this.token); }
+      finally { this.turning = false; }
+      if (t !== this.token) return false;
+    }
+    this.index++;
+    this.emit();
+    return true;
+  }
 
   schedule() {
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
+    this.timer = setTimeout(async () => {
       if (!this.playing) return;
       if (this.index >= this.steps.length - 1) {
         // Wait for lazily loaded steps instead of stopping.
@@ -57,9 +85,8 @@ export class Playback {
         this.pause();
         return;
       }
-      this.index++;
-      this.emit();
-      this.schedule();
+      await this.forward();
+      if (this.playing) this.schedule();
     }, this.intervalMs);
   }
 

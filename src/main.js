@@ -67,6 +67,7 @@ function updateSpeedInfo() {
 const playback = new Playback((i, step, playing) => {
   if (step.panoId !== currentPano) {
     currentPano = step.panoId;
+    lastJumpAt = performance.now();
     pano.setPano(step.panoId);
   }
   pano.setPov({ heading: step.heading, pitch: 0 });
@@ -78,7 +79,36 @@ const playback = new Playback((i, step, playing) => {
   progressEl.value = String(i);
   progressLabel.textContent = `${Math.round(step.routeDistanceM)}/${Math.round(walker.totalM)} m`;
   topUp(i);
-});
+}, turnInPlace);
+
+const TURN_MIN_DEG = 25;
+const TRANSITION_SETTLE_MS = 1000; // Street View exposes no "transition finished" event, so wait a fixed time
+let lastJumpAt = 0;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Rotate the camera inside the current panorama to the next step's heading, so the jump keeps the same view direction. Never overlaps a transition. */
+async function turnInPlace(from, to, cancelled) {
+  const start = pano.getPov();
+  const diff = ((to.heading - start.heading + 540) % 360) - 180;
+  if (Math.abs(diff) < TURN_MIN_DEG) return;
+  const wait = TRANSITION_SETTLE_MS - (performance.now() - lastJumpAt);
+  if (wait > 0) await sleep(wait);
+  if (cancelled()) return;
+  const duration = Math.min(1000, Math.max(300, Math.abs(diff) * 6));
+  await new Promise((resolve) => {
+    const t0 = performance.now();
+    const frame = (now) => {
+      if (cancelled()) return resolve();
+      const k = Math.min(1, (now - t0) / duration);
+      const eased = k < 0.5 ? 2 * k * k : 1 - 2 * (1 - k) * (1 - k);
+      pano.setPov({ heading: (start.heading + diff * eased + 360) % 360, pitch: start.pitch });
+      if (k < 1) requestAnimationFrame(frame);
+      else resolve();
+    };
+    requestAnimationFrame(frame);
+  });
+}
 
 function status(msg, error = false) {
   statusEl.textContent = msg;
