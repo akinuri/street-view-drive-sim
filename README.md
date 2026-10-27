@@ -11,7 +11,7 @@ Pick a start and end, get Google driving routes, choose one, and "drive" it by s
 5. Press **Drive this route**, then use Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
 6. **Reset** clears pins, routes and the Street View, and returns the map to its starting view.
 
-The URL updates as you go (`#a=...&b=...&route=...`: start, end and the chosen route's name, e.g. `I-95 N`), so you can copy it from the address bar to share. Opening such a link drops the pins, fetches the routes and selects that route; press **Drive this route** to start. The viewer needs their own API key. Alternatives are matched by name; if a route has no name or it changed, it falls back to the first route.
+The URL updates as you go (`#a=...&b=...&route=...&d=...`: start, end, the chosen route's name, e.g. `I-95 N`, and your position along it in metres), so you can copy it from the address bar to share. The position is updated when you pause or step. Opening such a link drops the pins, fetches the routes, selects that route and marks the position on the map with its Street View; press **Drive this route** to start driving from the route's beginning. The viewer needs their own API key. Alternatives are matched by name; if a route has no name or it changed, it falls back to the first route.
 
 ## Setup (optional, to run locally)
 

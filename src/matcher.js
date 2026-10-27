@@ -12,7 +12,7 @@ export const defaultMatchOptions = {
   // onProgress(done, total), signal: AbortSignal
 };
 
-class Route {
+export class Route {
   constructor(pts) {
     this.pts = pts;
     this.cum = [0];

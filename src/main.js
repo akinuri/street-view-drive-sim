@@ -1,6 +1,5 @@
-import { bearing, distance } from "./geo.js";
 import { fetchRoutes, getKey, loadGoogle, setKey, makePanoGetter, makePanoLookup } from "./google.js";
-import { createWalker } from "./matcher.js";
+import { createWalker, Route } from "./matcher.js";
 import { Playback } from "./playback.js";
 
 const $ = (id) => document.getElementById(id);
@@ -23,6 +22,7 @@ let routes = [];
 let currentPano = "";
 let needZoom = false;
 let pendingRoute = null;
+let positionM = 0; // metres along the selected route, shared via the URL
 let carIcon;
 const DEFAULT_VIEW = { center: { lat: 40.7579747, lng: -73.9881175 }, zoom: 14 }; // Times Square
 let homeView = DEFAULT_VIEW;
@@ -39,7 +39,10 @@ function updateUrl() {
   if (b) parts.push(`b=${COORDS.test(b) ? enc(b) : encodeURIComponent(b)}`);
   const route = routes[selectedRoute];
   if (route) parts.push(route.name ? `route=${encodeURIComponent(route.name)}` : `r=${selectedRoute + 1}`);
-  history.replaceState(null, "", parts.length ? `#${parts.join("&")}` : location.pathname + location.search);
+  if (route && positionM > 0) parts.push(`d=${Math.round(positionM)}`);
+  try {
+    history.replaceState(null, "", parts.length ? `#${parts.join("&")}` : location.pathname + location.search);
+  } catch { /* browsers rate-limit history updates */ }
   $("copy-link").hidden = !(a && b);
 }
 
@@ -64,7 +67,7 @@ function restoreFromUrl() {
     if (m) setPin(kind, new google.maps.LatLng(Number(m[1]), Number(m[2])));
     else (kind === "origin" ? originEl : destEl).value = text;
   }
-  pendingRoute = { name: p.get("route"), index: Number(p.get("r")) - 1 };
+  pendingRoute = { name: p.get("route"), index: Number(p.get("r")) - 1, atM: Math.max(0, Number(p.get("d")) || 0) };
   form.requestSubmit();
 }
 
@@ -147,6 +150,8 @@ const playback = new Playback((i, step, playing) => {
   playBtn.textContent = playing ? "Pause" : "Play";
   progressEl.value = String(i);
   progressLabel.textContent = `${Math.round(step.routeDistanceM)}/${Math.round(walker.totalM)} m`;
+  positionM = step.routeDistanceM;
+  if (!playing) updateUrl();
   topUp(i);
 }, turnInPlace);
 
@@ -245,33 +250,40 @@ let selectedRoute = 0;
 
 let previewToken = 0;
 
-/** Show the first panorama of the route as a preview, facing along the route. */
-async function previewStart(index) {
+/** Show a panorama at distance atM along the route (default: the start) as a preview, facing along the route. */
+async function previewStart(index, atM = 0) {
   const token = ++previewToken;
-  const path = routes[index].path;
-  const ahead = path.find((p) => distance(path[0], p) > 20) ?? path[path.length - 1];
+  const route = new Route(routes[index].path);
+  const at = route.pointAt(atM);
+  const heading = route.headingAt(atM);
+  if (atM > 0) {
+    marker.setPosition(at);
+    marker.setIcon({ ...carIcon, rotation: heading });
+  }
   let found = null;
-  try { found = await lookup(path[0], 50); } catch { /* preview is best-effort */ }
+  try { found = await lookup(at, 50); } catch { /* preview is best-effort */ }
   if (token !== previewToken || !found) return;
   currentPano = found.id;
   showPano();
   pano.setPano(found.id);
-  pano.setPov({ heading: bearing(path[0], ahead), pitch: 0 });
+  pano.setPov({ heading, pitch: 0 });
 }
 
-function selectRoute(selected) {
+function selectRoute(selected, atM = 0) {
   selectedRoute = selected;
+  positionM = atM;
   updateUrl();
   routeSelect.value = String(selected);
   polylines.forEach((p, i) => p.setOptions({ strokeWeight: i === selected ? 8 : 4, strokeOpacity: i === selected ? 1 : 0.6, zIndex: i === selected ? 2 : 1 }));
   playback.pause();
   setReady(false);
   abort?.abort();
-  previewStart(selected);
+  marker.setPosition(null);
+  previewStart(selected, atM);
 }
 
 /** Show all candidate routes; the user picks one, then presses "Drive this route". */
-function drawRoutes(selected = 0) {
+function drawRoutes(selected = 0, atM = 0) {
   polylines.forEach((p) => p.setMap(null));
   polylines = routes.map((r, i) => {
     const line = new google.maps.Polyline({ map, path: r.path, strokeColor: ROUTE_COLORS[i % ROUTE_COLORS.length], clickable: true });
@@ -281,7 +293,7 @@ function drawRoutes(selected = 0) {
   const bounds = new google.maps.LatLngBounds();
   routes.forEach((r) => r.path.forEach((p) => bounds.extend(p)));
   map.fitBounds(bounds);
-  selectRoute(selected);
+  selectRoute(selected, atM);
 }
 
 async function prepare(index) {
@@ -354,13 +366,14 @@ form.addEventListener("submit", async (ev) => {
     .join("");
   routeSelect.parentElement.hidden = false;
   driveBtn.hidden = false;
-  let pick = 0;
+  let pick = 0, atM = 0;
   if (pendingRoute) {
     const byName = pendingRoute.name ? routes.findIndex((r) => r.name === pendingRoute.name) : -1;
     pick = byName >= 0 ? byName : pendingRoute.index >= 0 && pendingRoute.index < routes.length ? pendingRoute.index : 0;
+    atM = pendingRoute.atM;
     pendingRoute = null;
   }
-  drawRoutes(pick);
+  drawRoutes(pick, atM);
   status(`${routes.length} route${routes.length > 1 ? "s" : ""} found. Click a route on the map or pick one, then press "Drive this route".`);
 });
 
