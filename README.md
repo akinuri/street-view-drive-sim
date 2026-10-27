@@ -4,24 +4,32 @@ Pick a start and end, get Google driving routes, choose one, and "drive" it by s
 
 ## Usage
 
-1. Click the map to drop pin **A** (start) and **B** (end), drag to adjust, or type addresses. The map starts at your current location if you allow it.
-2. Press **Get routes**. All candidate routes are drawn. Click one (or use the **Route** dropdown) to preview its first Street View.
-3. Set **Jump distance** (every panorama, or 10/25/50 m) and **Jumps per second**. "Every panorama" gives the smoothest transitions. Jump distance takes effect when you press **Drive this route**; speed changes apply immediately. The `~ km/h` readout is jump distance x rate.
-4. Press **Drive this route**, then use Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
-5. **Reset** clears pins, routes and the Street View, and returns the map to its starting view.
+1. Enter your Google Maps API key in the **API key** field in the header and press the green check to save it (the trash icon deletes it). It is stored only in your browser's localStorage and is never part of the build. See [Getting an API key](#getting-an-api-key).
+2. Click the map to drop pin **A** (start) and **B** (end), drag to adjust, or type addresses. The map starts at your current location if you allow it.
+3. Press **Get routes**. All candidate routes are drawn. Click one (or use the **Route** dropdown) to preview its first Street View.
+4. Set **Jump distance** (every panorama, or 10/25/50 m) and **Jumps per second**. "Every panorama" gives the smoothest transitions. Jump distance takes effect when you press **Drive this route**; speed changes apply immediately. The `~ km/h` readout is jump distance x rate.
+5. Press **Drive this route**, then use Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
+6. **Reset** clears pins, routes and the Street View, and returns the map to its starting view.
 
-## Setup
+## Setup (optional, to run locally)
 
 ```
 npm install
 npm run dev
 ```
 
-Enter your Google Maps API key in the **API key** field in the header and press **Save key**. It is stored only in your browser's localStorage and is never part of the build.
-
-In Google Cloud (billing enabled), enable **Maps JavaScript API** and **Routes API**. The key is used client-side (there is no backend), so restrict it by HTTP referrer (e.g. `http://localhost:5173/*`) and to those two APIs.
-
 Stack: Vite, plain JavaScript, Tailwind CSS v4.
+
+## Getting an API key
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com/) and create or select a project.
+2. Enable billing for the project (required by Google Maps Platform, which includes a monthly free usage allowance).
+3. Under **APIs & Services > Library**, enable **Maps JavaScript API** and **Routes API**.
+4. Under **APIs & Services > Credentials**, choose **Create credentials > API key**.
+5. Edit the key and restrict it, since it is used client-side and visible to anyone using the app:
+   - **Application restrictions:** HTTP referrers. Add `http://localhost:5173/*` for local use or `https://akinuri.github.io/*` if using the live demo.
+   - **API restrictions:** restrict to Maps JavaScript API and Routes API.
+6. Paste the key into the app's **API key** field, either locally or on the live demo at https://akinuri.github.io/street-view-drive-sim/ (it is already deployed; the key stays in your own browser).
 
 ## Architecture
 
