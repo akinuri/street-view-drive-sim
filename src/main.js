@@ -23,7 +23,8 @@ let routes = [];
 let currentPano = "";
 let needZoom = false;
 let carIcon;
-let homeView = { center: { lat: 0, lng: 0 }, zoom: 2 };
+const DEFAULT_VIEW = { center: { lat: 40.7579747, lng: -73.9881175 }, zoom: 14 }; // Times Square
+let homeView = DEFAULT_VIEW;
 const pins = { origin: null, dest: null }; // google.maps.Marker or null
 
 function fmt(ll) { return `${ll.lat().toFixed(5)}, ${ll.lng().toFixed(5)}`; }
@@ -164,7 +165,7 @@ async function init() {
     status(e.message, true);
     return;
   }
-  map = new google.maps.Map($("map"), { center: { lat: 0, lng: 0 }, zoom: 2, disableDefaultUI: true, zoomControl: true });
+  map = new google.maps.Map($("map"), { ...homeView, disableDefaultUI: true, zoomControl: true });
   pano = new google.maps.StreetViewPanorama($("pano"), { addressControl: false, motionTracking: false, zoom: 1, visible: false });
   carIcon = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 6, fillColor: "#d93025", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 };
   marker = new google.maps.Marker({ map, icon: carIcon });
@@ -177,17 +178,25 @@ async function init() {
     if (pins.origin && pins.dest) status("Press Get route.");
   });
   status("Click the map to drop start (A) and end (B) pins, or type addresses.");
-  navigator.geolocation?.getCurrentPosition(
+}
+
+$("find-me").addEventListener("change", (e) => {
+  const box = e.target;
+  if (!box.checked) {
+    homeView = DEFAULT_VIEW;
+    if (map && !routes.length) { map.setCenter(homeView.center); map.setZoom(homeView.zoom); }
+    return;
+  }
+  if (!navigator.geolocation) { box.checked = false; status("Geolocation is not available in this browser.", true); return; }
+  navigator.geolocation.getCurrentPosition(
     (pos) => {
       homeView = { center: { lat: pos.coords.latitude, lng: pos.coords.longitude }, zoom: 14 };
-      if (routes.length) return;
-      map.setCenter(homeView.center);
-      map.setZoom(homeView.zoom);
+      if (map && !routes.length) { map.setCenter(homeView.center); map.setZoom(homeView.zoom); }
     },
-    () => {},
+    () => { box.checked = false; status("Could not get your location. Check the browser's location permission.", true); },
     { timeout: 8000 }
   );
-}
+});
 
 const ROUTE_COLORS = ["#1a73e8", "#e8710a", "#188038", "#a142f4", "#d93025"];
 let selectedRoute = 0;

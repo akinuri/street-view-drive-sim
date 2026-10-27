@@ -11,11 +11,12 @@
       <div class="flex flex-wrap items-center gap-x-10 gap-y-2 px-4 py-3">
         <h1 class="text-base font-semibold tracking-tight text-sky-400">Drive Sim</h1>
         <form id="route-form" class="flex flex-wrap items-center gap-2">
-          <input id="origin" placeholder="A · Origin (address or click map)" required class="w-64 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
-          <input id="destination" placeholder="B · Destination" required class="w-64 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <input id="origin" placeholder="A · Origin (address or click map)" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <input id="destination" placeholder="B · Destination" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
           <button type="submit" class="rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-3 py-1.5 transition">Get routes</button>
           <button type="button" id="clear-pins" title="Clear pins, routes and the drive, and start over" class="rounded-md bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition">Reset</button>
-        </form>
+                  </form>
+                  <label class="flex items-center gap-2 text-slate-200 cursor-pointer select-none" title="Center the map on your location (asks for browser permission)"><input id="find-me" type="checkbox" class="peer sr-only" /><span class="relative w-9 h-5 rounded-full bg-slate-700 transition peer-checked:bg-sky-500 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>Find me</label>
         <label hidden class="flex items-center gap-1.5 text-slate-200">Route
           <select id="route-select" class="rounded-md bg-slate-800 border border-slate-600 px-2 py-1.5 text-white"></select></label>
         <label class="flex items-center gap-1.5 text-slate-200" title="How far each view jump moves you. Shorter jumps look smoother but need more API calls. Applies on 'Drive this route'.">Jump distance

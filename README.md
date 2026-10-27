@@ -5,7 +5,7 @@ Pick a start and end, get Google driving routes, choose one, and "drive" it by s
 ## Usage
 
 1. Enter your Google Maps API key in the **API key** field in the header and press the green check to save it (the trash icon deletes it). It is stored only in your browser's localStorage and is never part of the build. See [Getting an API key](#getting-an-api-key).
-2. Click the map to drop pin **A** (start) and **B** (end), drag to adjust, or type addresses. The map starts at your current location if you allow it.
+2. Click the map to drop pin **A** (start) and **B** (end), drag to adjust, or type addresses. The map starts at Times Square; tick **Find me** to center it on your location.
 3. Press **Get routes**. All candidate routes are drawn. Click one (or use the **Route** dropdown) to preview its first Street View.
 4. Set **Jump distance** (every panorama, or 10/25/50 m) and **Jumps per second**. "Every panorama" gives the smoothest transitions. Jump distance takes effect when you press **Drive this route**; speed changes apply immediately. The `~ km/h` readout is jump distance x rate.
 5. Press **Drive this route**, then use Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
