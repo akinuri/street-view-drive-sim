@@ -6,7 +6,7 @@ Pick a start and end, get Google driving routes, choose one, and "drive" it by s
 
 1. Click the map to drop pin **A** (start) and **B** (end), drag to adjust, or type addresses. The map starts at your current location if you allow it.
 2. Press **Get routes**. All candidate routes are drawn; click one (or use the **Route** dropdown) to preview its first Street View.
-3. Choose **Jump distance** (how far each view jump moves you, 10/25/50 m; applies on "Drive this route", shorter = smoother but more API calls) and **Jumps per second** (applies instantly). The `~ km/h` readout is jump distance x rate.
+3. Choose **Jump distance** (how far each view jump moves you: every panorama, or 10/25/50 m; "Every panorama" gives the smoothest transitions; applies on "Drive this route") and **Jumps per second** (applies instantly). The `~ km/h` readout is jump distance x rate.
 4. Press **Drive this route**, then Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
 
 ## Setup
@@ -30,16 +30,19 @@ Stack: Vite, plain JavaScript, Tailwind CSS v4.
 - `src/main.js` – DOM wiring.
 
 ### Matching algorithm
-1. Sample the route at the chosen jump distance (interval widens so a route has at most 1500 samples).
-2. Look up the nearest outdoor panorama near each sample (6 parallel requests).
-3. Reject panoramas >25 m from the route, drop duplicate IDs, and require strictly increasing progress along the route (projection is limited to a window near the expected position).
+1. Find the first panorama near the route start and read its links to neighbouring panoramas.
+2. Repeatedly move to the linked neighbour whose heading best matches the route's direction (within 60 degrees), so each step is a real neighbour and Street View can animate the transition.
+3. Reject neighbours >25 m from the route, already-visited IDs, and any that don't make forward progress along the route.
 4. Heading = bearing of the route from ~8 m behind to ~15 m ahead of the panorama's projected point.
-5. Stretches with no accepted panorama are reported as gaps and skipped (never replaced with unrelated panoramas).
+5. If no valid link exists, probe ahead on the route (up to 200 m) for a panorama; the skipped stretch is reported as a gap (never replaced with unrelated panoramas). Those jumps are hard cuts.
+6. Jump distance thins the chain; "Every panorama" keeps all of it. Thinned steps are no longer neighbours, so expect more hard cuts.
+
+The older sample-and-lookup matcher (`matchRoute`) is still in `matcher.js` but unused.
 
 ## Known limitations
 - Origin/destination can be typed addresses or map pins; no Places Autocomplete yet.
-- Panorama links are not used to validate transitions; parallel roads/opposite carriageways are only filtered by distance + monotonic progress.
-- Panoramas are looked up for the whole route up front (many API calls on long routes); no lazy/windowed loading.
+- Links are followed greedily by heading; at complex intersections or with opposite carriageways close together it can still pick a wrong branch.
+- Following links is sequential (about one API call per panorama), so building a long route takes a while.
 - Playback jumps between panoramas; no interpolation.
 - Panoramas can be older imagery or user-contributed; the OUTDOOR source filter reduces but doesn't eliminate that.
 - Don't persist/cache panorama data beyond the session (Maps Platform terms).

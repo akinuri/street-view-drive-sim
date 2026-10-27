@@ -1,6 +1,6 @@
 import { bearing, distance } from "./geo.js";
-import { fetchRoutes, loadGoogle, makePanoLookup } from "./google.js";
-import { matchRoute } from "./matcher.js";
+import { fetchRoutes, loadGoogle, makePanoGetter, makePanoLookup } from "./google.js";
+import { walkRoute } from "./matcher.js";
 import { Playback } from "./playback.js";
 
 const $ = (id) => document.getElementById(id);
@@ -16,7 +16,7 @@ const progressEl = $("progress");
 const progressLabel = $("progress-label");
 const statusEl = $("status");
 
-let map, pano, marker, lookup, abort;
+let map, pano, marker, lookup, getPano, abort;
 let polylines = [];
 let routes = [];
 let currentPano = "";
@@ -59,7 +59,7 @@ function setReady(ready) {
 }
 
 function updateSpeedInfo() {
-  const mps = Number($("density").value) * Number(speedEl.value) / 1000;
+  const mps = (Number($("density").value) || 10) * Number(speedEl.value) / 1000;
   $("speed-info").textContent = `~ ${Math.round(mps * 3.6)} km/h`;
 }
 
@@ -96,6 +96,7 @@ async function init() {
   carIcon = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 6, fillColor: "#d93025", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 };
   marker = new google.maps.Marker({ map, icon: carIcon });
   lookup = makePanoLookup();
+  getPano = makePanoGetter();
   map.addListener("click", (e) => {
     if (!pins.origin) setPin("origin", e.latLng);
     else if (!pins.dest) setPin("dest", e.latLng);
@@ -164,12 +165,10 @@ async function prepare(index) {
   const ctrl = (abort = new AbortController());
   previewToken++;
   try {
-    const result = await matchRoute(routes[index].path, lookup, {
-      sampleIntervalM: Number($("density").value),
-      searchRadiusM: Math.max(15, Number($("density").value)),
-      maxSamples: 1500,
+    const result = await walkRoute(routes[index].path, lookup, getPano, {
+      jumpM: Number($("density").value),
       signal: ctrl.signal,
-      onProgress: (d, t) => status(`Finding Street View panoramas... ${d}/${t}`),
+      onProgress: (d, t) => status(`Following Street View links... ${d}/${t} m`),
     });
     if (result.steps.length < 2) return status("Not enough Street View coverage along this route.", true);
     const gapM = result.gaps.reduce((s, g) => s + g.toM - g.fromM, 0);

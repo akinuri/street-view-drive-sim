@@ -20,8 +20,9 @@
           <select id="route-select" class="rounded-md bg-slate-800 border border-slate-600 px-2 py-1.5 text-white"></select></label>
         <label class="flex items-center gap-1.5 text-slate-200" title="How far each view jump moves you. Shorter jumps look smoother but need more API calls. Applies on 'Drive this route'.">Jump distance
           <select id="density" class="rounded-md bg-slate-800 border border-slate-600 px-2 py-1.5 text-white">
+            <option value="0" selected>Every panorama</option>
             <option value="10">10 m</option>
-            <option value="25" selected>25 m</option>
+            <option value="25">25 m</option>
             <option value="50">50 m</option>
           </select></label>
         <button id="drive" hidden class="rounded-md bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-3 py-1.5 transition">Drive this route</button>

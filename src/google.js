@@ -66,3 +66,27 @@ export function makePanoLookup() {
     }
   };
 }
+
+/** Fetch a panorama by ID, including its links to neighbouring panoramas. Cached for the session only. */
+export function makePanoGetter() {
+  const sv = new google.maps.StreetViewService();
+  const cache = new Map();
+  return async (id) => {
+    if (cache.has(id)) return cache.get(id);
+    try {
+      const { data } = await sv.getPanorama({ pano: id });
+      const loc = data.location;
+      if (!loc?.pano || !loc.latLng) return null;
+      const info = {
+        id: loc.pano,
+        position: { lat: loc.latLng.lat(), lng: loc.latLng.lng() },
+        links: (data.links ?? []).filter((l) => l.pano).map((l) => ({ id: l.pano, heading: l.heading })),
+      };
+      cache.set(id, info);
+      return info;
+    } catch (e) {
+      if (e?.code === "ZERO_RESULTS") return null;
+      throw e;
+    }
+  };
+}

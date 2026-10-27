@@ -113,3 +113,90 @@ export async function matchRoute(path, lookup, opts = {}) {
 
   return { steps, gaps, totalM: route.total, truncated };
 }
+
+const angleDiff = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
+
+/**
+ * Link-following matcher: starts at the first panorama and repeatedly moves to a linked
+ * neighbour whose direction best matches the route's heading, so consecutive steps are
+ * real Street View neighbours (smooth transitions, no hopping to parallel roads).
+ * Falls back to a location lookup ahead on the route when no valid link exists (a gap).
+ *
+ * lookup(point, radiusM) -> { id, position } | null
+ * getPano(id) -> { id, position, links: [{ id, heading }] } | null
+ * opts.jumpM > 0 thins the chain so kept steps are at least that far apart.
+ */
+export async function walkRoute(path, lookup, getPano, opts = {}) {
+  const o = { searchRadiusM: 30, maxRouteOffsetM: 25, maxHeadingDiff: 60, maxSteps: 4000, jumpM: 0, ...opts };
+  const route = new Route(path);
+  const all = [];
+  const gaps = [];
+  const seen = new Set();
+
+  const check = () => { if (o.signal?.aborted) throw new DOMException("Aborted", "AbortError"); };
+  const safe = async (fn) => { try { return await fn(); } catch (e) { if (e.name === "AbortError") throw e; return null; } };
+  const accept = (info, fromD) => {
+    if (!info || seen.has(info.id)) return null;
+    const proj = route.project(info.position, Math.max(0, fromD - 5), fromD + 150);
+    return proj.offsetM <= o.maxRouteOffsetM && proj.distAlongM > fromD ? proj : null;
+  };
+
+  // Probe ahead along the route for any panorama to (re)start from.
+  const findAhead = async (fromD) => {
+    for (let probe = Math.max(0, fromD); probe <= Math.min(route.total, fromD + 200); probe += 20) {
+      check();
+      const base = await safe(() => lookup(route.pointAt(probe), o.searchRadiusM));
+      if (!base) continue;
+      const info = await safe(() => getPano(base.id));
+      const proj = accept(info, fromD);
+      if (proj) return { info, proj };
+    }
+    return null;
+  };
+
+  const push = (info, proj) => {
+    seen.add(info.id);
+    all.push({ panoId: info.id, position: info.position, heading: route.headingAt(proj.distAlongM), routeDistanceM: proj.distAlongM });
+    o.onProgress?.(Math.round(proj.distAlongM), Math.round(route.total));
+  };
+
+  let first = await findAhead(-1);
+  if (!first) return { steps: [], gaps: [{ fromM: 0, toM: route.total }], totalM: route.total, truncated: false };
+  push(first.info, first.proj);
+  let cur = first.info;
+  let d = first.proj.distAlongM;
+
+  while (all.length < o.maxSteps && d < route.total - 15) {
+    check();
+    const want = route.headingAt(d);
+    const links = (cur.links ?? [])
+      .filter((l) => angleDiff(l.heading, want) <= o.maxHeadingDiff && !seen.has(l.id))
+      .sort((a, b) => angleDiff(a.heading, want) - angleDiff(b.heading, want));
+
+    let next = null;
+    for (const link of links) {
+      const info = await safe(() => getPano(link.id));
+      const proj = accept(info, d);
+      if (proj) { next = { info, proj }; break; }
+    }
+
+    if (!next) {
+      next = await findAhead(d + 1);
+      if (!next) { gaps.push({ fromM: d, toM: route.total }); break; }
+      gaps.push({ fromM: d, toM: next.proj.distAlongM });
+    }
+    push(next.info, next.proj);
+    cur = next.info;
+    d = next.proj.distAlongM;
+  }
+
+  let steps = all;
+  if (o.jumpM > 0) {
+    steps = [];
+    for (const s of all) {
+      if (!steps.length || s.routeDistanceM - steps[steps.length - 1].routeDistanceM >= o.jumpM) steps.push(s);
+    }
+    if (steps[steps.length - 1] !== all[all.length - 1]) steps.push(all[all.length - 1]);
+  }
+  return { steps, gaps, totalM: route.total, truncated: all.length >= o.maxSteps };
+}
