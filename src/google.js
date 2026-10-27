@@ -1,9 +1,13 @@
 import { decodePolyline } from "./geo.js";
 
-const KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const STORAGE_KEY = "gmaps-api-key";
+
+export const getKey = () => localStorage.getItem(STORAGE_KEY) ?? "";
+export const setKey = (k) => (k ? localStorage.setItem(STORAGE_KEY, k) : localStorage.removeItem(STORAGE_KEY));
 
 export async function loadGoogle() {
-  if (!KEY || KEY === "your_key_here") throw new Error("Missing VITE_GOOGLE_MAPS_API_KEY. Copy .env.example to .env and set your key.");
+  const KEY = getKey();
+  if (!KEY) throw new Error("Enter your Google Maps API key (top right of the second row) to start.");
   if (!window.google?.maps) {
     await new Promise((resolve, reject) => {
       const s = document.createElement("script");
@@ -27,7 +31,7 @@ export async function fetchRoutes(origin, destination, signal) {
     signal,
     headers: {
       "Content-Type": "application/json",
-      "X-Goog-Api-Key": KEY,
+      "X-Goog-Api-Key": getKey(),
       "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
     },
     body: JSON.stringify({

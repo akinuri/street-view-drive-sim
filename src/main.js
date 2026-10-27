@@ -1,5 +1,5 @@
 import { bearing, distance } from "./geo.js";
-import { fetchRoutes, loadGoogle, makePanoGetter, makePanoLookup } from "./google.js";
+import { fetchRoutes, getKey, loadGoogle, setKey, makePanoGetter, makePanoLookup } from "./google.js";
 import { createWalker } from "./matcher.js";
 import { Playback } from "./playback.js";
 
@@ -141,6 +141,20 @@ function status(msg, error = false) {
   statusEl.classList.toggle("text-red-400", error);
   statusEl.classList.toggle("text-slate-400", !error);
 }
+
+const keyEl = $("api-key");
+keyEl.value = getKey();
+$("delete-key").hidden = !getKey();
+$("key-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  setKey(keyEl.value.trim());
+  location.reload(); // the Maps script can only be loaded once per page
+});
+$("delete-key").addEventListener("click", () => {
+  setKey("");
+  location.reload();
+});
+window.gm_authFailure = () => status("Google rejected the API key. Check the key, billing, enabled APIs and referrer restrictions.", true);
 
 async function init() {
   try {

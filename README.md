@@ -14,11 +14,12 @@ Pick a start and end, get Google driving routes, choose one, and "drive" it by s
 
 ```
 npm install
-copy .env.example .env   # then set VITE_GOOGLE_MAPS_API_KEY
 npm run dev
 ```
 
-In Google Cloud (billing enabled), enable **Maps JavaScript API** and **Routes API**. The key is used client-side (there is no backend), so restrict it by HTTP referrer (e.g. `http://localhost:5173/*`) and to those two APIs. `.env` is git-ignored.
+Enter your Google Maps API key in the **API key** field in the header and press **Save key**. It is stored only in your browser's localStorage and is never part of the build.
+
+In Google Cloud (billing enabled), enable **Maps JavaScript API** and **Routes API**. The key is used client-side (there is no backend), so restrict it by HTTP referrer (e.g. `http://localhost:5173/*`) and to those two APIs.
 
 Stack: Vite, plain JavaScript, Tailwind CSS v4.
 

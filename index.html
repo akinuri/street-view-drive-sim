@@ -48,6 +48,11 @@
           <span id="speed-info" class="text-white font-medium min-w-20" title="Approximate travel speed = jump distance x jumps per second"></span>
         </div>
         <span id="status" class="flex-1 min-w-48 text-slate-200"></span>
+        <form id="key-form" class="flex items-center gap-2">
+          <input id="api-key" type="password" autocomplete="off" placeholder="Google Maps API key" title="Stored only in this browser (localStorage)" class="w-56 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <button type="submit" title="Save key" aria-label="Save key" class="rounded-md bg-emerald-900/60 hover:bg-emerald-800/70 text-emerald-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
+          <button type="button" id="delete-key" hidden title="Delete saved key" aria-label="Delete saved key" class="rounded-md bg-red-900/60 hover:bg-red-800/70 text-red-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button>
+        </form>
       </div>
     </header><main class="flex-1 min-h-0 grid grid-cols-1 grid-rows-2 md:grid-rows-1 md:grid-cols-2 gap-1 p-1">
       <div id="map" class="rounded-lg overflow-hidden bg-slate-900"></div>
