@@ -9,20 +9,23 @@ export class Playback {
   /** @param onChange (index, step, playing) => void */
   constructor(onChange) {
     this.onChange = onChange;
+    this.hasMore = () => false; // true while more steps may still load
   }
 
   get length() { return this.steps.length; }
 
-  load(steps) {
+  /** `steps` may keep growing (same array); set hasMore to say whether it will. */
+  load(steps, hasMore = () => false) {
     this.pause();
     this.steps = steps;
+    this.hasMore = hasMore;
     this.index = 0;
     if (steps.length) this.emit();
   }
 
   play() {
     if (this.playing || !this.steps.length) return;
-    if (this.index >= this.steps.length - 1) this.index = 0;
+    if (this.index >= this.steps.length - 1 && !this.hasMore()) this.index = 0;
     this.playing = true;
     this.emit();
     this.schedule();
@@ -48,7 +51,12 @@ export class Playback {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       if (!this.playing) return;
-      if (this.index >= this.steps.length - 1) { this.pause(); return; }
+      if (this.index >= this.steps.length - 1) {
+        // Wait for lazily loaded steps instead of stopping.
+        if (this.hasMore()) { this.schedule(); return; }
+        this.pause();
+        return;
+      }
       this.index++;
       this.emit();
       this.schedule();

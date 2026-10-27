@@ -30,19 +30,21 @@ Stack: Vite, plain JavaScript, Tailwind CSS v4.
 - `src/main.js` – DOM wiring.
 
 ### Matching algorithm
-1. Find the first panorama near the route start and read its links to neighbouring panoramas.
+1. Find the first panorama near the route start and read its links to neighbouring panoramas. Nothing else is fetched up front.
 2. Repeatedly move to the linked neighbour whose heading best matches the route's direction (within 60 degrees), so each step is a real neighbour and Street View can animate the transition.
 3. Reject neighbours >25 m from the route, already-visited IDs, and any that don't make forward progress along the route.
 4. Heading = bearing of the route from ~8 m behind to ~15 m ahead of the panorama's projected point.
 5. If no valid link exists, probe ahead on the route (up to 200 m) for a panorama; the skipped stretch is reported as a gap (never replaced with unrelated panoramas). Those jumps are hard cuts.
 6. Jump distance thins the chain; "Every panorama" keeps all of it. Thinned steps are no longer neighbours, so expect more hard cuts.
 
+The route is walked lazily: about 20 steps are loaded to start, and more load in the background as playback nears the end of what's loaded. API calls are therefore only spent on the part you actually drive. The slider covers only what's loaded so far.
+
 The older sample-and-lookup matcher (`matchRoute`) is still in `matcher.js` but unused.
 
 ## Known limitations
 - Origin/destination can be typed addresses or map pins; no Places Autocomplete yet.
 - Links are followed greedily by heading; at complex intersections or with opposite carriageways close together it can still pick a wrong branch.
-- Following links is sequential (about one API call per panorama), so building a long route takes a while.
+- Following links is sequential (about one API call per panorama driven); panoramas ahead of the playhead are loaded in small batches.
 - Playback jumps between panoramas; no interpolation.
 - Panoramas can be older imagery or user-contributed; the OUTDOOR source filter reduces but doesn't eliminate that.
 - Don't persist/cache panorama data beyond the session (Maps Platform terms).

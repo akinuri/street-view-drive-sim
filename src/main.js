@@ -1,6 +1,6 @@
 import { bearing, distance } from "./geo.js";
 import { fetchRoutes, loadGoogle, makePanoGetter, makePanoLookup } from "./google.js";
-import { walkRoute } from "./matcher.js";
+import { createWalker } from "./matcher.js";
 import { Playback } from "./playback.js";
 
 const $ = (id) => document.getElementById(id);
@@ -16,7 +16,8 @@ const progressEl = $("progress");
 const progressLabel = $("progress-label");
 const statusEl = $("status");
 
-let map, pano, marker, lookup, getPano, abort;
+let map, pano, marker, lookup, getPano, abort, walker;
+const LOOKAHEAD = 20;
 let polylines = [];
 let routes = [];
 let currentPano = "";
@@ -75,7 +76,8 @@ const playback = new Playback((i, step, playing) => {
   map.panTo(step.position);
   playBtn.textContent = playing ? "Pause" : "Play";
   progressEl.value = String(i);
-  progressLabel.textContent = `${i + 1}/${playback.length}`;
+  progressLabel.textContent = `${Math.round(step.routeDistanceM)}/${Math.round(walker.totalM)} m`;
+  topUp(i);
 });
 
 function status(msg, error = false) {
@@ -165,27 +167,46 @@ async function prepare(index) {
   const ctrl = (abort = new AbortController());
   previewToken++;
   try {
-    const result = await walkRoute(routes[index].path, lookup, getPano, {
+    walker = createWalker(routes[index].path, lookup, getPano, {
       jumpM: Number($("density").value),
       signal: ctrl.signal,
-      onProgress: (d, t) => status(`Following Street View links... ${d}/${t} m`),
     });
-    if (result.steps.length < 2) return status("Not enough Street View coverage along this route.", true);
-    const gapM = result.gaps.reduce((s, g) => s + g.toM - g.fromM, 0);
-    status(
-      `${(result.totalM / 1000).toFixed(1)} km, ${result.steps.length} panoramas` +
-      (gapM ? `, ${result.gaps.length} coverage gap(s) (~${Math.round(gapM)} m skipped)` : "") +
-      (result.truncated ? ", sampled sparsely (long route)" : "")
-    );
-    progressEl.max = String(result.steps.length - 1);
+    status("Finding the start of the route...");
+    await walker.extend(LOOKAHEAD);
+    if (walker.steps.length < 2) return status("Not enough Street View coverage along this route.", true);
+    updateRouteStatus();
+    progressEl.max = String(walker.steps.length - 1);
     setReady(true);
     currentPano = "";
     needZoom = true;
     showPano();
-    playback.load(result.steps);
+    playback.load(walker.steps, () => !walker.done);
   } catch (e) {
     if (e.name !== "AbortError") status(`Panorama lookup failed: ${e.message}`, true);
   }
+}
+
+/** Load more steps in the background when playback gets close to the end of what's loaded. */
+function topUp(i) {
+  const w = walker;
+  if (!w || w.done || i < w.steps.length - LOOKAHEAD) return;
+  w.extend(LOOKAHEAD)
+    .then(() => {
+      if (w !== walker) return;
+      progressEl.max = String(w.steps.length - 1);
+      updateRouteStatus();
+    })
+    .catch((e) => { if (e.name !== "AbortError") status(`Panorama lookup failed: ${e.message}`, true); });
+}
+
+function updateRouteStatus() {
+  const w = walker;
+  const gapM = w.gaps.reduce((s, g) => s + g.toM - g.fromM, 0);
+  status(
+    `${(w.totalM / 1000).toFixed(1)} km route` +
+    (gapM ? `, ${w.gaps.length} coverage gap(s) (~${Math.round(gapM)} m skipped)` : "") +
+    (w.done ? "" : ", loading ahead as you drive")
+  );
 }
 
 form.addEventListener("submit", async (ev) => {

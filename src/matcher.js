@@ -125,13 +125,17 @@ const angleDiff = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
  * lookup(point, radiusM) -> { id, position } | null
  * getPano(id) -> { id, position, links: [{ id, heading }] } | null
  * opts.jumpM > 0 thins the chain so kept steps are at least that far apart.
+ *
+ * Lazy: returns immediately; call extend(n) to walk further. Nothing is fetched until asked.
  */
-export async function walkRoute(path, lookup, getPano, opts = {}) {
-  const o = { searchRadiusM: 30, maxRouteOffsetM: 25, maxHeadingDiff: 60, maxSteps: 4000, jumpM: 0, ...opts };
+export function createWalker(path, lookup, getPano, opts = {}) {
+  const o = { searchRadiusM: 30, maxRouteOffsetM: 25, maxHeadingDiff: 60, maxChain: 5000, jumpM: 0, ...opts };
   const route = new Route(path);
-  const all = [];
+  const steps = []; // kept steps, grows as the walker extends
   const gaps = [];
   const seen = new Set();
+  let chainCount = 0, lastChain = null, cur = null, d = 0;
+  let started = false, done = false, busy = null;
 
   const check = () => { if (o.signal?.aborted) throw new DOMException("Aborted", "AbortError"); };
   const safe = async (fn) => { try { return await fn(); } catch (e) { if (e.name === "AbortError") throw e; return null; } };
@@ -156,17 +160,28 @@ export async function walkRoute(path, lookup, getPano, opts = {}) {
 
   const push = (info, proj) => {
     seen.add(info.id);
-    all.push({ panoId: info.id, position: info.position, heading: route.headingAt(proj.distAlongM), routeDistanceM: proj.distAlongM });
-    o.onProgress?.(Math.round(proj.distAlongM), Math.round(route.total));
+    chainCount++;
+    const step = { panoId: info.id, position: info.position, heading: route.headingAt(proj.distAlongM), routeDistanceM: proj.distAlongM };
+    lastChain = step;
+    if (!steps.length || step.routeDistanceM - steps[steps.length - 1].routeDistanceM >= o.jumpM) steps.push(step);
   };
 
-  let first = await findAhead(-1);
-  if (!first) return { steps: [], gaps: [{ fromM: 0, toM: route.total }], totalM: route.total, truncated: false };
-  push(first.info, first.proj);
-  let cur = first.info;
-  let d = first.proj.distAlongM;
+  const finish = () => {
+    done = true;
+    if (lastChain && steps[steps.length - 1] !== lastChain) steps.push(lastChain);
+  };
 
-  while (all.length < o.maxSteps && d < route.total - 15) {
+  const advance = async () => {
+    if (!started) {
+      started = true;
+      const first = await findAhead(-1);
+      if (!first) { gaps.push({ fromM: 0, toM: route.total }); return finish(); }
+      push(first.info, first.proj);
+      cur = first.info;
+      d = first.proj.distAlongM;
+      return;
+    }
+    if (chainCount >= o.maxChain || d >= route.total - 15) return finish();
     check();
     const want = route.headingAt(d);
     const links = (cur.links ?? [])
@@ -182,21 +197,29 @@ export async function walkRoute(path, lookup, getPano, opts = {}) {
 
     if (!next) {
       next = await findAhead(d + 1);
-      if (!next) { gaps.push({ fromM: d, toM: route.total }); break; }
+      if (!next) { gaps.push({ fromM: d, toM: route.total }); return finish(); }
       gaps.push({ fromM: d, toM: next.proj.distAlongM });
     }
     push(next.info, next.proj);
     cur = next.info;
     d = next.proj.distAlongM;
-  }
+  };
 
-  let steps = all;
-  if (o.jumpM > 0) {
-    steps = [];
-    for (const s of all) {
-      if (!steps.length || s.routeDistanceM - steps[steps.length - 1].routeDistanceM >= o.jumpM) steps.push(s);
-    }
-    if (steps[steps.length - 1] !== all[all.length - 1]) steps.push(all[all.length - 1]);
-  }
-  return { steps, gaps, totalM: route.total, truncated: all.length >= o.maxSteps };
+  return {
+    steps,
+    gaps,
+    totalM: route.total,
+    get done() { return done; },
+    /** Walk further until `count` more steps exist (or the route ends). Concurrent calls share one run. */
+    extend(count) {
+      if (busy) return busy;
+      const target = steps.length + count;
+      busy = (async () => {
+        try {
+          while (!done && steps.length < target) await advance();
+        } finally { busy = null; }
+      })();
+      return busy;
+    },
+  };
 }
