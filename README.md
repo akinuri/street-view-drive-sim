@@ -5,9 +5,9 @@ Pick a start and end, get Google driving routes, choose one, and "drive" it by s
 ## Usage
 
 1. Click the map to drop pin **A** (start) and **B** (end), drag to adjust, or type addresses. The map starts at your current location if you allow it.
-2. Press **Get routes**. All candidate routes are drawn; click one (or use the **Route** dropdown) to preview its first Street View.
-3. Choose **Jump distance** (how far each view jump moves you: every panorama, or 10/25/50 m; "Every panorama" gives the smoothest transitions; applies on "Drive this route") and **Jumps per second** (applies instantly). The `~ km/h` readout is jump distance x rate.
-4. Press **Drive this route**, then Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
+2. Press **Get routes**. All candidate routes are drawn. Click one (or use the **Route** dropdown) to preview its first Street View.
+3. Set **Jump distance** (every panorama, or 10/25/50 m) and **Jumps per second**. "Every panorama" gives the smoothest transitions. Jump distance takes effect when you press **Drive this route**; speed changes apply immediately. The `~ km/h` readout is jump distance x rate.
+4. Press **Drive this route**, then use Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
 5. **Reset** clears pins, routes and the Street View, and returns the map to its starting view.
 
 ## Setup
@@ -18,14 +18,14 @@ copy .env.example .env   # then set VITE_GOOGLE_MAPS_API_KEY
 npm run dev
 ```
 
-In Google Cloud (billing enabled), enable **Maps JavaScript API** and **Routes API**. Restrict the key by HTTP referrer (`http://localhost:5173/*`) and to those two APIs. The key is used client-side (no backend), so never reuse an unrestricted key. `.env` is git-ignored; never commit a real key.
+In Google Cloud (billing enabled), enable **Maps JavaScript API** and **Routes API**. The key is used client-side (there is no backend), so restrict it by HTTP referrer (e.g. `http://localhost:5173/*`) and to those two APIs. `.env` is git-ignored.
 
 Stack: Vite, plain JavaScript, Tailwind CSS v4.
 
 ## Architecture
 
 - `src/geo.js` – distance, bearing, polyline decoding.
-- `src/matcher.js` – route → panorama sequence. Pure; the panorama lookup is injected, so it can be unit-tested.
+- `src/matcher.js` – route → panorama sequence, independent of the UI (panorama lookup is injected).
 - `src/google.js` – Maps loader, Routes API `computeRoutes` call, `StreetViewService` lookup.
 - `src/playback.js` – play/pause/seek/speed state.
 - `src/main.js` – DOM wiring.
@@ -40,7 +40,7 @@ Stack: Vite, plain JavaScript, Tailwind CSS v4.
 
 The route is walked lazily: about 20 steps are loaded to start, and more load in the background as playback nears the end of what's loaded. API calls are therefore only spent on the part you actually drive. The slider covers only what's loaded so far.
 
-The older sample-and-lookup matcher (`matchRoute`) is still in `matcher.js` but unused.
+Before a sharp turn, the camera rotates in place before moving to the next panorama, so the turn and the Street View transition don't overlap.
 
 ## Known limitations
 - Origin/destination can be typed addresses or map pins; no Places Autocomplete yet.
@@ -48,8 +48,7 @@ The older sample-and-lookup matcher (`matchRoute`) is still in `matcher.js` but 
 - Following links is sequential (about one API call per panorama driven); panoramas ahead of the playhead are loaded in small batches.
 - Playback jumps between panoramas; no interpolation.
 - Panoramas can be older imagery or user-contributed; the OUTDOOR source filter reduces but doesn't eliminate that.
-- Don't persist/cache panorama data beyond the session (Maps Platform terms).
-
+- Panorama data is not stored beyond the session, in line with Maps Platform terms.
 
 ## Screenshot
 
