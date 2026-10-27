@@ -55,7 +55,6 @@ function showPano() {
 }
 
 function setReady(ready) {
-  controls.classList.toggle("opacity-50", !ready);
   for (const id of ["prev", "play", "next", "progress"]) $(id).disabled = !ready;
 }
 
