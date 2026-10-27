@@ -49,6 +49,11 @@ function waypoint(kind, text) {
   return text;
 }
 
+function showPano() {
+  pano.setVisible(true);
+  $("pano-placeholder").hidden = true;
+}
+
 function setReady(ready) {
   controls.classList.toggle("opacity-50", !ready);
   for (const id of ["prev", "play", "next", "progress"]) $(id).disabled = !ready;
@@ -124,7 +129,7 @@ async function previewStart(index) {
   try { found = await lookup(path[0], 50); } catch { /* preview is best-effort */ }
   if (token !== previewToken || !found) return;
   currentPano = found.id;
-  pano.setVisible(true);
+  showPano();
   pano.setPano(found.id);
   pano.setPov({ heading: bearing(path[0], ahead), pitch: 0 });
 }
@@ -178,7 +183,7 @@ async function prepare(index) {
     setReady(true);
     currentPano = "";
     needZoom = true;
-    pano.setVisible(true);
+    showPano();
     playback.load(result.steps);
   } catch (e) {
     if (e.name !== "AbortError") status(`Panorama lookup failed: ${e.message}`, true);

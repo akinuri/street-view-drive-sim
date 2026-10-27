@@ -52,7 +52,20 @@
     </header>
     <main class="flex-1 min-h-0 grid grid-cols-1 grid-rows-2 md:grid-rows-1 md:grid-cols-2 gap-1 p-1">
       <div id="map" class="rounded-lg overflow-hidden bg-slate-900"></div>
-      <div id="pano" class="rounded-lg overflow-hidden bg-slate-900"></div>
+      <div class="relative rounded-lg overflow-hidden bg-slate-900">
+        <div id="pano" class="absolute inset-0"></div>
+        <div id="pano-placeholder" class="absolute inset-0 pointer-events-none">
+          <div class="absolute inset-0 blur-md scale-110">
+            <div class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-sky-900 via-sky-700 to-sky-300"></div>
+            <div class="absolute inset-x-0 bottom-0 h-1/2 bg-emerald-900"></div>
+            <div class="absolute inset-x-0 bottom-0 h-1/2 bg-slate-700" style="clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%)"></div>
+            <div class="absolute inset-x-0 bottom-0 h-1/2 bg-amber-200/80" style="clip-path: polygon(49.5% 0, 50.5% 0, 53% 100%, 47% 100%)"></div>
+          </div>
+          <div class="absolute inset-0 bg-slate-950/40 flex items-center justify-center">
+            <span class="text-slate-200 text-base font-medium drop-shadow">Street View appears here once you pick a route</span>
+          </div>
+        </div>
+      </div>
     </main>
     <script type="module" src="/src/main.js"></script>
   </body>
