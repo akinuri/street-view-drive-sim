@@ -11,49 +11,58 @@
       <div class="flex flex-wrap items-center gap-x-10 gap-y-2 px-4 py-3">
         <h1 class="text-base font-semibold tracking-tight text-sky-400">Drive Sim</h1>
         <form id="route-form" class="flex flex-wrap items-center gap-2">
-          <input id="origin" placeholder="A · Origin (address or click map)" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
-          <input id="destination" placeholder="B · Destination" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
-          <button type="submit" class="rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-3 py-1.5 transition">Get routes</button>
-          <button type="button" id="clear-pins" title="Clear pins, routes and the drive, and start over" class="rounded-md bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition">Reset</button>
+          <input id="origin" placeholder="A · Origin (address or click map)" data-i18n-ph="ph.origin" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <input id="destination" placeholder="B · Destination" data-i18n-ph="ph.dest" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <button type="submit" data-i18n="btn.routes" class="rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-3 py-1.5 transition">Get routes</button>
+          <button type="button" id="clear-pins" data-i18n="btn.reset" data-i18n-title="title.reset" title="Clear pins, routes and the drive, and start over" class="rounded-md bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition">Reset</button>
         </form>
-        <label class="flex items-center gap-2 text-slate-200 cursor-pointer select-none" title="Center the map on your location (asks for browser permission)"><input id="find-me" type="checkbox" class="peer sr-only" /><span class="relative w-9 h-5 rounded-full bg-slate-700 transition peer-checked:bg-sky-500 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>Find me</label>
-        <label hidden class="flex items-center gap-1.5 text-slate-200">Route
+        <label class="flex items-center gap-2 text-slate-200 cursor-pointer select-none" data-i18n-title="title.findme" title="Center the map on your location (asks for browser permission)"><input id="find-me" type="checkbox" class="peer sr-only" /><span class="relative w-9 h-5 rounded-full bg-slate-700 transition peer-checked:bg-sky-500 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span><span data-i18n="findme">Find me</span></label>
+        <label hidden class="flex items-center gap-1.5 text-slate-200"><span data-i18n="route">Route</span>
           <select id="route-select" class="rounded-md bg-slate-800 border border-slate-600 px-2 py-1.5 text-white"></select></label>
-        <label class="flex items-center gap-1.5 text-slate-200" title="How far each view jump moves you. Shorter jumps look smoother but need more API calls. Applies on 'Drive this route'.">Jump distance
+        <label class="flex items-center gap-1.5 text-slate-200" data-i18n-title="title.jump" title="How far each view jump moves you. Shorter jumps look smoother but need more API calls. Applies on 'Drive this route'."><span data-i18n="jump">Jump distance</span>
           <select id="density" class="rounded-md bg-slate-800 border border-slate-600 px-2 py-1.5 text-white">
-            <option value="0" selected>Every panorama</option>
+            <option value="0" selected data-i18n="opt.every">Every panorama</option>
             <option value="10">10 m</option>
             <option value="25">25 m</option>
             <option value="50">50 m</option>
           </select></label>
-        <button id="drive" hidden class="rounded-md bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-3 py-1.5 transition">Drive this route</button>
-        <button type="button" id="copy-link" hidden title="Copy link to this route" aria-label="Copy link" class="ml-auto rounded-md bg-slate-700 hover:bg-slate-600 text-white p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></button>
+        <button id="drive" hidden data-i18n="drive" class="rounded-md bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-3 py-1.5 transition">Drive this route</button>
+        <div class="ml-auto flex items-center gap-3">
+          <label class="flex items-center gap-1.5 rounded-md bg-slate-800 border border-slate-600 pl-2 text-slate-300 focus-within:ring-2 focus-within:ring-sky-500">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"/></svg>
+            <select id="lang" aria-label="Language" class="bg-transparent py-1.5 pr-2 text-white focus:outline-none">
+              <option value="en" class="bg-slate-800">EN</option>
+              <option value="tr" class="bg-slate-800">TR</option>
+            </select>
+          </label>
+          <button type="button" id="copy-link" hidden title="Copy link to this route" data-i18n-title="title.copy" data-i18n-aria="aria.copy" aria-label="Copy link" class="rounded-md bg-slate-700 hover:bg-slate-600 text-white p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></button>
+        </div>
       </div>
       <div class="flex flex-wrap items-center gap-x-10 gap-y-2 px-4 pb-3">
         <div id="controls" class="flex items-center gap-x-8 rounded-lg bg-slate-900 px-3 py-1.5">
           <div class="flex items-center gap-2">
-            <button id="prev" title="Previous (←)" class="rounded-md px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition">Prev</button>
-            <button id="play" title="Play/Pause (Space)" class="w-16 rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold py-1 disabled:opacity-40 disabled:cursor-not-allowed transition">Play</button>
-            <button id="next" title="Next (→)" class="rounded-md px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition">Next</button>
+            <button id="prev" data-i18n="prev" data-i18n-title="title.prev" title="Previous (←)" class="rounded-md px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition">Prev</button>
+            <button id="play" data-i18n-title="title.play" title="Play/Pause (Space)" class="min-w-16 rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed transition">Play</button>
+            <button id="next" data-i18n="next" data-i18n-title="title.next" title="Next (→)" class="rounded-md px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition">Next</button>
           </div>
-          <label class="flex items-center gap-1.5 text-slate-200">Jumps per second
-            <select id="speed" title="How many view jumps happen each second" class="rounded-md bg-slate-800 border border-slate-600 px-2 py-1 text-white">
-              <option value="125">1 per 8 s</option>
-              <option value="250">1 per 4 s</option>
-              <option value="500">1 per 2 s</option>
-              <option value="1000" selected>1 per s</option>
-              <option value="2000">2 per s</option>
-              <option value="4000">4 per s</option>
+          <label class="flex items-center gap-1.5 text-slate-200"><span data-i18n="jps">Jumps per second</span>
+            <select id="speed" data-i18n-title="title.jps" title="How many view jumps happen each second" class="rounded-md bg-slate-800 border border-slate-600 px-2 py-1 text-white">
+              <option value="125" data-i18n="speed.125">1 per 8 s</option>
+              <option value="250" data-i18n="speed.250">1 per 4 s</option>
+              <option value="500" data-i18n="speed.500">1 per 2 s</option>
+              <option value="1000" selected data-i18n="speed.1000">1 per s</option>
+              <option value="2000" data-i18n="speed.2000">2 per s</option>
+              <option value="4000" data-i18n="speed.4000">4 per s</option>
             </select></label>
           <input id="progress" type="range" min="0" max="0" value="0" class="w-56 md:w-80 disabled:opacity-40" />
           <span id="progress-label" class="tabular-nums text-white min-w-16"></span>
-          <span id="speed-info" class="text-white font-medium min-w-20" title="Approximate travel speed = jump distance x jumps per second"></span>
+          <span id="speed-info" class="text-white font-medium min-w-20" data-i18n-title="title.speedinfo" title="Approximate travel speed = jump distance x jumps per second"></span>
         </div>
         <span id="status" class="flex-1 min-w-48 text-slate-200"></span>
         <form id="key-form" class="flex items-center gap-2">
-          <input id="api-key" type="password" autocomplete="off" placeholder="Google Maps API key" title="Stored only in this browser (localStorage)" class="w-56 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
-          <button type="submit" title="Save key" aria-label="Save key" class="rounded-md bg-emerald-900/60 hover:bg-emerald-800/70 text-emerald-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
-          <button type="button" id="delete-key" hidden title="Delete saved key" aria-label="Delete saved key" class="rounded-md bg-red-900/60 hover:bg-red-800/70 text-red-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button>
+          <input id="api-key" type="password" autocomplete="off" placeholder="Google Maps API key" data-i18n-ph="ph.key" title="Stored only in this browser (localStorage)" data-i18n-title="title.key" class="w-56 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <button type="submit" title="Save key" data-i18n-title="title.save" data-i18n-aria="title.save" aria-label="Save key" class="rounded-md bg-emerald-900/60 hover:bg-emerald-800/70 text-emerald-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
+          <button type="button" id="delete-key" hidden title="Delete saved key" data-i18n-title="title.delete" data-i18n-aria="title.delete" aria-label="Delete saved key" class="rounded-md bg-red-900/60 hover:bg-red-800/70 text-red-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button>
         </form>
       </div>
     </header><main class="flex-1 min-h-0 grid grid-cols-1 grid-rows-2 md:grid-rows-1 md:grid-cols-2 gap-1 p-1">
@@ -68,7 +77,7 @@
             <div class="absolute inset-x-0 bottom-0 h-1/2 bg-amber-200/80" style="clip-path: polygon(49.5% 0, 50.5% 0, 53% 100%, 47% 100%)"></div>
           </div>
           <div class="absolute inset-0 bg-slate-950/40 flex items-center justify-center">
-            <span class="text-slate-200 text-base font-medium drop-shadow">Street View appears here once you pick a route</span>
+            <span class="text-slate-200 text-base font-medium drop-shadow" data-i18n="placeholder">Street View appears here once you pick a route</span>
           </div>
         </div>
       </div>

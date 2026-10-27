@@ -1,4 +1,5 @@
 import { fetchRoutes, getKey, loadGoogle, setKey, makePanoGetter, makePanoLookup } from "./google.js";
+import { applyStatic, getLang, setLang, t } from "./i18n.js";
 import { createWalker, Route } from "./matcher.js";
 import { Playback } from "./playback.js";
 
@@ -49,9 +50,9 @@ function updateUrl() {
 $("copy-link").addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(location.href);
-    status("Link copied.");
+    status("st.copied");
   } catch {
-    status("Could not copy. Copy the link from the address bar instead.", true);
+    status("st.copyFail", true);
   }
 });
 
@@ -101,7 +102,7 @@ function resetAll() {
   routeSelect.parentElement.hidden = true;
   driveBtn.hidden = true;
   setReady(false);
-  playBtn.textContent = "Play";
+  playBtn.textContent = t("play");
   progressEl.max = "0";
   progressEl.value = "0";
   progressLabel.textContent = "";
@@ -110,7 +111,7 @@ function resetAll() {
   map.setZoom(homeView.zoom);
   pano.setVisible(false);
   $("pano-placeholder").hidden = false;
-  status("Click the map to drop start (A) and end (B) pins, or type addresses.");
+  status("st.hint");
   updateUrl();
 }
 
@@ -147,7 +148,7 @@ const playback = new Playback((i, step, playing) => {
   marker.setIcon({ ...carIcon, rotation: step.heading });
   if (needZoom) { map.setZoom(17); needZoom = false; }
   map.panTo(step.position);
-  playBtn.textContent = playing ? "Pause" : "Play";
+  playBtn.textContent = playing ? t("pause") : t("play");
   progressEl.value = String(i);
   progressLabel.textContent = `${Math.round(step.routeDistanceM)}/${Math.round(walker.totalM)} m`;
   positionM = step.routeDistanceM;
@@ -184,8 +185,17 @@ async function turnInPlace(from, to, cancelled) {
   });
 }
 
-function status(msg, error = false) {
-  statusEl.textContent = msg;
+let lastStatus = { msg: "", error: false, params: {} };
+
+/** msg is an i18n key, plain text (passed through), or a function returning text so it can be re-rendered on language change. */
+function status(msg, error = false, params = {}) {
+  lastStatus = { msg, error, params };
+  renderStatus();
+}
+
+function renderStatus() {
+  const { msg, error, params } = lastStatus;
+  statusEl.textContent = typeof msg === "function" ? msg() : t(msg, params);
   statusEl.classList.toggle("text-red-400", error);
   statusEl.classList.toggle("text-slate-400", !error);
 }
@@ -202,7 +212,7 @@ $("delete-key").addEventListener("click", () => {
   setKey("");
   location.reload();
 });
-window.gm_authFailure = () => status("Google rejected the API key. Check the key, billing, enabled APIs and referrer restrictions.", true);
+window.gm_authFailure = () => status("st.authFail", true);
 
 async function init() {
   try {
@@ -220,10 +230,10 @@ async function init() {
   map.addListener("click", (e) => {
     if (!pins.origin) setPin("origin", e.latLng);
     else if (!pins.dest) setPin("dest", e.latLng);
-    else status("Both pins placed. Drag A or B to move them, or press Reset.");
-    if (pins.origin && pins.dest) status("Press Get route.");
+    else status("st.bothPins");
+    if (pins.origin && pins.dest) status("st.pressGet");
   });
-  status("Click the map to drop start (A) and end (B) pins, or type addresses.");
+  status("st.hint");
   restoreFromUrl();
 }
 
@@ -234,13 +244,13 @@ $("find-me").addEventListener("change", (e) => {
     if (map && !routes.length) { map.setCenter(homeView.center); map.setZoom(homeView.zoom); }
     return;
   }
-  if (!navigator.geolocation) { box.checked = false; status("Geolocation is not available in this browser.", true); return; }
+  if (!navigator.geolocation) { box.checked = false; status("st.geoNone", true); return; }
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       homeView = { center: { lat: pos.coords.latitude, lng: pos.coords.longitude }, zoom: 14 };
       if (map && !routes.length) { map.setCenter(homeView.center); map.setZoom(homeView.zoom); }
     },
-    () => { box.checked = false; status("Could not get your location. Check the browser's location permission.", true); },
+    () => { box.checked = false; status("st.geoFail", true); },
     { timeout: 8000 }
   );
 });
@@ -307,9 +317,9 @@ async function prepare(index) {
       jumpM: Number($("density").value),
       signal: ctrl.signal,
     });
-    status("Finding the start of the route...");
+    status("st.finding");
     await walker.extend(LOOKAHEAD);
-    if (walker.steps.length < 2) return status("Not enough Street View coverage along this route.", true);
+    if (walker.steps.length < 2) return status("st.noCoverage", true);
     updateRouteStatus();
     progressEl.max = String(walker.steps.length - 1);
     setReady(true);
@@ -318,7 +328,7 @@ async function prepare(index) {
     showPano();
     playback.load(walker.steps, () => !walker.done);
   } catch (e) {
-    if (e.name !== "AbortError") status(`Panorama lookup failed: ${e.message}`, true);
+    if (e.name !== "AbortError") status("st.lookupFail", true, { msg: e.message });
   }
 }
 
@@ -332,38 +342,44 @@ function topUp(i) {
       progressEl.max = String(w.steps.length - 1);
       updateRouteStatus();
     })
-    .catch((e) => { if (e.name !== "AbortError") status(`Panorama lookup failed: ${e.message}`, true); });
+    .catch((e) => { if (e.name !== "AbortError") status("st.lookupFail", true, { msg: e.message }); });
 }
 
 function updateRouteStatus() {
   const w = walker;
   const gapM = w.gaps.reduce((s, g) => s + g.toM - g.fromM, 0);
-  status(
-    `${(w.totalM / 1000).toFixed(1)} km route` +
-    (gapM ? `, ${w.gaps.length} coverage gap(s) (~${Math.round(gapM)} m skipped)` : "") +
-    (w.done ? "" : ", loading ahead as you drive")
+  status(() =>
+    t("st.routeKm", { km: (w.totalM / 1000).toFixed(1) }) +
+    (gapM ? t("st.gaps", { n: w.gaps.length, m: Math.round(gapM) }) : "") +
+    (w.done ? "" : t("st.loading"))
   );
+}
+
+function renderRouteOptions() {
+  const sel = routeSelect.value;
+  routeSelect.innerHTML = routes
+    .map((r, i) => `<option value="${i}">${t("routeOption", { n: i + 1, km: (r.distanceM / 1000).toFixed(1), min: Math.round(r.durationS / 60) })}</option>`)
+    .join("");
+  routeSelect.value = sel;
 }
 
 form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   if (!map) return;
   const origin = originEl.value.trim(), dest = destEl.value.trim();
-  if (!origin || !dest) return status("Please enter both an origin and a destination.", true);
+  if (!origin || !dest) return status("st.enterBoth", true);
   abort?.abort();
   playback.pause();
   setReady(false);
   routeSelect.parentElement.hidden = true;
   driveBtn.hidden = true;
-  status("Requesting routes...");
+  status("st.requesting");
   try {
     routes = await fetchRoutes(waypoint("origin", origin), waypoint("dest", dest));
   } catch (e) {
     return status(e.message, true);
   }
-  routeSelect.innerHTML = routes
-    .map((r, i) => `<option value="${i}">Route ${i + 1}: ${(r.distanceM / 1000).toFixed(1)} km, ${Math.round(r.durationS / 60)} min</option>`)
-    .join("");
+  renderRouteOptions();
   routeSelect.parentElement.hidden = false;
   driveBtn.hidden = false;
   let pick = 0, atM = 0;
@@ -374,7 +390,7 @@ form.addEventListener("submit", async (ev) => {
     pendingRoute = null;
   }
   drawRoutes(pick, atM);
-  status(`${routes.length} route${routes.length > 1 ? "s" : ""} found. Click a route on the map or pick one, then press "Drive this route".`);
+  status(routes.length > 1 ? "st.routesMany" : "st.routesOne", false, { n: routes.length });
 });
 
 routeSelect.addEventListener("change", () => selectRoute(Number(routeSelect.value)));
@@ -398,6 +414,16 @@ window.addEventListener("keydown", (e) => {
 
 setReady(false);
 updateSpeedInfo();
+const langEl = $("lang");
+langEl.value = getLang();
+applyStatic();
+playBtn.textContent = t("play");
+langEl.addEventListener("change", () => {
+  setLang(langEl.value);
+  playBtn.textContent = playback.playing ? t("pause") : t("play");
+  if (routes.length) renderRouteOptions();
+  renderStatus();
+});
 init();
 
 

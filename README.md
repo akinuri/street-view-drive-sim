@@ -10,6 +10,7 @@ Pick a start and end, get Google driving routes, choose one, and "drive" it by s
 4. Set **Jump distance** (every panorama, or 10/25/50 m) and **Jumps per second**. "Every panorama" gives the smoothest transitions. Jump distance takes effect when you press **Drive this route**; speed changes apply immediately. The `~ km/h` readout is jump distance x rate.
 5. Press **Drive this route**, then use Play/Pause, Prev/Next or the slider. Keyboard: Space, Left/Right arrows.
 6. **Reset** clears pins, routes and the Street View, and returns the map to its starting view.
+7. Use the **EN / TR** switch in the top right to change the interface language (remembered in your browser).
 
 The URL updates as you go (`#a=...&b=...&route=...&d=...`: start, end, the chosen route's name, e.g. `I-95 N`, and your position along it in metres), so you can copy it from the address bar to share. The position is updated when you pause or step. Opening such a link drops the pins, fetches the routes, selects that route and marks the position on the map with its Street View; press **Drive this route** to start driving from the route's beginning. The viewer needs their own API key. Alternatives are matched by name; if a route has no name or it changed, it falls back to the first route.
 

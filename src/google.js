@@ -1,4 +1,5 @@
 import { decodePolyline } from "./geo.js";
+import { t } from "./i18n.js";
 
 const STORAGE_KEY = "gmaps-api-key";
 
@@ -7,17 +8,17 @@ export const setKey = (k) => (k ? localStorage.setItem(STORAGE_KEY, k) : localSt
 
 export async function loadGoogle() {
   const KEY = getKey();
-  if (!KEY) throw new Error("Enter your Google Maps API key (top right of the second row) to start.");
+  if (!KEY) throw new Error(t("err.noKey"));
   if (!window.google?.maps) {
     await new Promise((resolve, reject) => {
       const s = document.createElement("script");
       s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(KEY)}&v=weekly`;
       s.onload = () => resolve();
-      s.onerror = () => reject(new Error("Failed to load Google Maps JavaScript API."));
+      s.onerror = () => reject(new Error(t("err.script")));
       document.head.appendChild(s);
     });
   }
-  if (!google.maps.Map) throw new Error("Google Maps failed to initialise. Check the API key, billing and that Maps JavaScript API is enabled.");
+  if (!google.maps.Map) throw new Error(t("err.init"));
 }
 
 function toWaypoint(v) {
@@ -42,8 +43,8 @@ export async function fetchRoutes(origin, destination, signal) {
     }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error?.message ?? `Routes API error ${res.status}`);
-  if (!data.routes?.length) throw new Error("No driving route found between those locations.");
+  if (!res.ok) throw new Error(data?.error?.message   ?? t("err.routesHttp", { status: res.status }));
+    if (!data.routes?.length) throw new Error(t("err.noRoute"));
   return data.routes.map((r) => ({
     path: decodePolyline(r.polyline.encodedPolyline),
     name: r.description ?? "",
