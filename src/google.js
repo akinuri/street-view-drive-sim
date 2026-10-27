@@ -32,7 +32,7 @@ export async function fetchRoutes(origin, destination, signal) {
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": getKey(),
-      "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
+      "X-Goog-FieldMask": "routes.description,routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
     },
     body: JSON.stringify({
       origin: toWaypoint(origin),
@@ -46,6 +46,7 @@ export async function fetchRoutes(origin, destination, signal) {
   if (!data.routes?.length) throw new Error("No driving route found between those locations.");
   return data.routes.map((r) => ({
     path: decodePolyline(r.polyline.encodedPolyline),
+    name: r.description ?? "",
     distanceM: r.distanceMeters ?? 0,
     durationS: parseInt(r.duration ?? "0", 10),
   }));

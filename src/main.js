@@ -22,6 +22,7 @@ let polylines = [];
 let routes = [];
 let currentPano = "";
 let needZoom = false;
+let pendingRoute = null;
 let carIcon;
 const DEFAULT_VIEW = { center: { lat: 40.7579747, lng: -73.9881175 }, zoom: 14 }; // Times Square
 let homeView = DEFAULT_VIEW;
@@ -29,15 +30,54 @@ const pins = { origin: null, dest: null }; // google.maps.Marker or null
 
 function fmt(ll) { return `${ll.lat().toFixed(5)}, ${ll.lng().toFixed(5)}`; }
 
+/** Keep the URL hash in sync (#a=...&b=...&route=NAME) so the current setup can be shared. */
+function updateUrl() {
+  const enc = (s) => encodeURIComponent(s.replace(/\s+/g, "")).replace(/%2C/g, ",");
+  const parts = [];
+  const a = originEl.value.trim(), b = destEl.value.trim();
+  if (a) parts.push(`a=${COORDS.test(a) ? enc(a) : encodeURIComponent(a)}`);
+  if (b) parts.push(`b=${COORDS.test(b) ? enc(b) : encodeURIComponent(b)}`);
+  const route = routes[selectedRoute];
+  if (route) parts.push(route.name ? `route=${encodeURIComponent(route.name)}` : `r=${selectedRoute + 1}`);
+  history.replaceState(null, "", parts.length ? `#${parts.join("&")}` : location.pathname + location.search);
+  $("copy-link").hidden = !(a && b);
+}
+
+$("copy-link").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(location.href);
+    status("Link copied.");
+  } catch {
+    status("Could not copy. Copy the link from the address bar instead.", true);
+  }
+});
+
+const COORDS = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/;
+
+/** Fill the inputs (and pins, for coordinates) from the URL hash and fetch the routes. */
+function restoreFromUrl() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  const a = p.get("a"), b = p.get("b");
+  if (!a || !b) return;
+  for (const [kind, text] of [["origin", a], ["dest", b]]) {
+    const m = COORDS.exec(text);
+    if (m) setPin(kind, new google.maps.LatLng(Number(m[1]), Number(m[2])));
+    else (kind === "origin" ? originEl : destEl).value = text;
+  }
+  pendingRoute = { name: p.get("route"), index: Number(p.get("r")) - 1 };
+  form.requestSubmit();
+}
+
 function setPin(kind, latLng) {
   const input = kind === "origin" ? originEl : destEl;
   if (!pins[kind]) {
     pins[kind] = new google.maps.Marker({ map, position: latLng, draggable: true, label: kind === "origin" ? "A" : "B", zIndex: 5 });
-    pins[kind].addListener("dragend", (e) => { input.value = fmt(e.latLng); });
+    pins[kind].addListener("dragend", (e) => { input.value = fmt(e.latLng); updateUrl(); });
   } else {
     pins[kind].setPosition(latLng);
   }
   input.value = fmt(latLng);
+  updateUrl();
 }
 
 /** Return the app to its initial state: pins, routes, playback, panorama and map marker. */
@@ -68,6 +108,7 @@ function resetAll() {
   pano.setVisible(false);
   $("pano-placeholder").hidden = false;
   status("Click the map to drop start (A) and end (B) pins, or type addresses.");
+  updateUrl();
 }
 
 /** A typed address overrides a pin; otherwise the pin's current position is used. */
@@ -178,6 +219,7 @@ async function init() {
     if (pins.origin && pins.dest) status("Press Get route.");
   });
   status("Click the map to drop start (A) and end (B) pins, or type addresses.");
+  restoreFromUrl();
 }
 
 $("find-me").addEventListener("change", (e) => {
@@ -219,6 +261,7 @@ async function previewStart(index) {
 
 function selectRoute(selected) {
   selectedRoute = selected;
+  updateUrl();
   routeSelect.value = String(selected);
   polylines.forEach((p, i) => p.setOptions({ strokeWeight: i === selected ? 8 : 4, strokeOpacity: i === selected ? 1 : 0.6, zIndex: i === selected ? 2 : 1 }));
   playback.pause();
@@ -228,7 +271,7 @@ function selectRoute(selected) {
 }
 
 /** Show all candidate routes; the user picks one, then presses "Drive this route". */
-function drawRoutes() {
+function drawRoutes(selected = 0) {
   polylines.forEach((p) => p.setMap(null));
   polylines = routes.map((r, i) => {
     const line = new google.maps.Polyline({ map, path: r.path, strokeColor: ROUTE_COLORS[i % ROUTE_COLORS.length], clickable: true });
@@ -238,7 +281,7 @@ function drawRoutes() {
   const bounds = new google.maps.LatLngBounds();
   routes.forEach((r) => r.path.forEach((p) => bounds.extend(p)));
   map.fitBounds(bounds);
-  selectRoute(0);
+  selectRoute(selected);
 }
 
 async function prepare(index) {
@@ -311,7 +354,13 @@ form.addEventListener("submit", async (ev) => {
     .join("");
   routeSelect.parentElement.hidden = false;
   driveBtn.hidden = false;
-  drawRoutes();
+  let pick = 0;
+  if (pendingRoute) {
+    const byName = pendingRoute.name ? routes.findIndex((r) => r.name === pendingRoute.name) : -1;
+    pick = byName >= 0 ? byName : pendingRoute.index >= 0 && pendingRoute.index < routes.length ? pendingRoute.index : 0;
+    pendingRoute = null;
+  }
+  drawRoutes(pick);
   status(`${routes.length} route${routes.length > 1 ? "s" : ""} found. Click a route on the map or pick one, then press "Drive this route".`);
 });
 
@@ -323,6 +372,8 @@ $("prev").addEventListener("click", () => { playback.pause(); playback.step(-1);
 $("next").addEventListener("click", () => { playback.pause(); playback.step(1); });
 speedEl.addEventListener("change", () => { playback.intervalMs = 1e6 / Number(speedEl.value); updateSpeedInfo(); });
 $("density").addEventListener("change", updateSpeedInfo);
+originEl.addEventListener("input", updateUrl);
+destEl.addEventListener("input", updateUrl);
 playback.intervalMs = 1e6 / Number(speedEl.value);
 progressEl.addEventListener("input", () => playback.seek(Number(progressEl.value)));
 window.addEventListener("keydown", (e) => {

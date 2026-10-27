@@ -15,8 +15,8 @@
           <input id="destination" placeholder="B · Destination" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
           <button type="submit" class="rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-3 py-1.5 transition">Get routes</button>
           <button type="button" id="clear-pins" title="Clear pins, routes and the drive, and start over" class="rounded-md bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition">Reset</button>
-                  </form>
-                  <label class="flex items-center gap-2 text-slate-200 cursor-pointer select-none" title="Center the map on your location (asks for browser permission)"><input id="find-me" type="checkbox" class="peer sr-only" /><span class="relative w-9 h-5 rounded-full bg-slate-700 transition peer-checked:bg-sky-500 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>Find me</label>
+        </form>
+        <label class="flex items-center gap-2 text-slate-200 cursor-pointer select-none" title="Center the map on your location (asks for browser permission)"><input id="find-me" type="checkbox" class="peer sr-only" /><span class="relative w-9 h-5 rounded-full bg-slate-700 transition peer-checked:bg-sky-500 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>Find me</label>
         <label hidden class="flex items-center gap-1.5 text-slate-200">Route
           <select id="route-select" class="rounded-md bg-slate-800 border border-slate-600 px-2 py-1.5 text-white"></select></label>
         <label class="flex items-center gap-1.5 text-slate-200" title="How far each view jump moves you. Shorter jumps look smoother but need more API calls. Applies on 'Drive this route'.">Jump distance
@@ -27,6 +27,7 @@
             <option value="50">50 m</option>
           </select></label>
         <button id="drive" hidden class="rounded-md bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-3 py-1.5 transition">Drive this route</button>
+        <button type="button" id="copy-link" hidden title="Copy link to this route" aria-label="Copy link" class="ml-auto rounded-md bg-slate-700 hover:bg-slate-600 text-white p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></button>
       </div>
       <div class="flex flex-wrap items-center gap-x-10 gap-y-2 px-4 pb-3">
         <div id="controls" class="flex items-center gap-x-8 rounded-lg bg-slate-900 px-3 py-1.5">
