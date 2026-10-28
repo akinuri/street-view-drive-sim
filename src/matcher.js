@@ -138,22 +138,37 @@ export function createWalker(path, lookup, getPano, opts = {}) {
   let started = false, done = false, busy = null;
 
   const check = () => { if (o.signal?.aborted) throw new DOMException("Aborted", "AbortError"); };
-  const safe = async (fn) => { try { return await fn(); } catch (e) { if (e.name === "AbortError") throw e; return null; } };
-  const accept = (info, fromD) => {
+  // Transient API errors (rate limits etc.) are retried, then thrown; they must not look like missing coverage.
+  const safe = async (fn) => {
+    for (let attempt = 0; ; attempt++) {
+      try { return await fn(); } catch (e) {
+        if (e.name === "AbortError" || attempt >= 3) throw e;
+        await new Promise((r) => setTimeout(r, 400 * 2 ** attempt));
+        check();
+      }
+    }
+  };
+  const accept = (info, fromD, rangeM = 150) => {
     if (!info || seen.has(info.id)) return null;
-    const proj = route.project(info.position, Math.max(0, fromD - 5), fromD + 150);
+    const proj = route.project(info.position, Math.max(0, fromD - 5), fromD + rangeM);
     return proj.offsetM <= o.maxRouteOffsetM && proj.distAlongM > fromD ? proj : null;
   };
 
   // Probe ahead along the route for any panorama to (re)start from.
-  const findAhead = async (fromD) => {
-    for (let probe = Math.max(0, fromD); probe <= Math.min(route.total, fromD + 200); probe += 20) {
+  const findAhead = async (fromD, rangeM = 200) => {
+    const step = rangeM > 200 ? 40 : 20;
+    const probes = [];
+    for (let p = Math.max(0, fromD); p <= Math.min(route.total, fromD + rangeM); p += step) probes.push(p);
+    // Probe in parallel batches (results checked in route order) so long gaps are skipped quickly.
+    for (let i = 0; i < probes.length; i += 8) {
       check();
-      const base = await safe(() => lookup(route.pointAt(probe), o.searchRadiusM));
-      if (!base) continue;
-      const info = await safe(() => getPano(base.id));
-      const proj = accept(info, fromD);
-      if (proj) return { info, proj };
+      const bases = await Promise.all(probes.slice(i, i + 8).map((p) => safe(() => lookup(route.pointAt(p), o.searchRadiusM))));
+      for (const base of bases) {
+        if (!base) continue;
+        const info = await safe(() => getPano(base.id));
+        const proj = accept(info, fromD, rangeM - 50);
+        if (proj) return { info, proj };
+      }
     }
     return null;
   };
@@ -196,7 +211,7 @@ export function createWalker(path, lookup, getPano, opts = {}) {
     }
 
     if (!next) {
-      next = await findAhead(d + 1);
+      next = (await findAhead(d + 1)) ?? (await findAhead(d + 1, 1500));
       if (!next) { gaps.push({ fromM: d, toM: route.total }); return finish(); }
       gaps.push({ fromM: d, toM: next.proj.distAlongM });
     }

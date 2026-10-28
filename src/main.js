@@ -161,6 +161,7 @@ const playback = new Playback((i, step, playing) => {
   if (!playing) updateUrl();
   topUp(i);
 }, turnInPlace);
+playback.onWait = () => topUp(playback.index);
 
 const TURN_MIN_DEG = 25;
 const TRANSITION_SETTLE_MS = 1000; // Street View exposes no "transition finished" event, so wait a fixed time

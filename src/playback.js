@@ -81,7 +81,7 @@ export class Playback {
       if (!this.playing) return;
       if (this.index >= this.steps.length - 1) {
         // Wait for lazily loaded steps instead of stopping.
-        if (this.hasMore()) { this.schedule(); return; }
+        if (this.hasMore()) { this.onWait?.(); this.schedule(); return; }
         this.pause();
         return;
       }
