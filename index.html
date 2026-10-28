@@ -69,6 +69,12 @@
       <div id="map" class="rounded-lg overflow-hidden bg-slate-900"></div>
       <div class="relative rounded-lg overflow-hidden bg-slate-900">
         <div id="pano" class="absolute inset-0"></div>
+        <div id="jump-spinner" hidden class="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/40 pointer-events-none">
+          <div class="flex items-center gap-3 rounded-lg bg-slate-900/90 px-4 py-2 text-white">
+            <svg class="w-5 h-5 animate-spin text-sky-400" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <span data-i18n="jumping">Jumping...</span>
+          </div>
+        </div>
         <div id="pano-placeholder" class="absolute inset-0 pointer-events-none">
           <div class="absolute inset-0 blur-md scale-110">
             <div class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-sky-900 via-sky-700 to-sky-300"></div>

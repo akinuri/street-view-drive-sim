@@ -23,6 +23,7 @@ let routes = [];
 let currentPano = "";
 let needZoom = false;
 let pendingRoute = null;
+let jumpToken = 0;
 let positionM = 0; // metres along the selected route, shared via the URL
 let carIcon;
 const DEFAULT_VIEW = { center: { lat: 40.7579747, lng: -73.9881175 }, zoom: 14 }; // Times Square
@@ -292,12 +293,36 @@ function selectRoute(selected, atM = 0) {
   previewStart(selected, atM);
 }
 
+/** While driving, jump to the loaded step nearest to a point clicked on the driven route (loading ahead if needed). */
+async function jumpTo(latLng) {
+  const w = walker;
+  const spinner = $("jump-spinner");
+  const target = new Route(routes[selectedRoute].path).project({ lat: latLng.lat(), lng: latLng.lng() }, 0, Infinity).distAlongM;
+  const token = ++jumpToken;
+  spinner.hidden = false;
+  try {
+    while (!w.done && w.steps[w.steps.length - 1].routeDistanceM < target) {
+      await w.extend(LOOKAHEAD);
+      if (w !== walker || token !== jumpToken) return;
+      progressEl.max = String(w.steps.length - 1);
+    }
+  } catch (e) {
+    if (e.name !== "AbortError") status("st.lookupFail", true, { msg: e.message });
+    return;
+  } finally {
+    if (token === jumpToken) spinner.hidden = true;
+  }
+  let best = 0;
+  w.steps.forEach((s, i) => { if (Math.abs(s.routeDistanceM - target) < Math.abs(w.steps[best].routeDistanceM - target)) best = i; });
+  playback.seek(best);
+}
+
 /** Show all candidate routes; the user picks one, then presses "Drive this route". */
 function drawRoutes(selected = 0, atM = 0) {
   polylines.forEach((p) => p.setMap(null));
   polylines = routes.map((r, i) => {
     const line = new google.maps.Polyline({ map, path: r.path, strokeColor: ROUTE_COLORS[i % ROUTE_COLORS.length], clickable: true });
-    line.addListener("click", () => selectRoute(i));
+    line.addListener("click", (e) => (i === selectedRoute && walker && playback.steps.length ? jumpTo(e.latLng) : selectRoute(i)));
     return line;
   });
   const bounds = new google.maps.LatLngBounds();

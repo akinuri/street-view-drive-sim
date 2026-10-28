@@ -37,6 +37,7 @@ const dict = {
     "title.save": "Save key",
     "title.delete": "Delete saved key",
     "placeholder": "Street View appears here once you pick a route",
+    "jumping": "Jumping...",
 
     "routeOption": "Route {n}: {km} km, {min} min",
     "st.hint": "Click the map to drop start (A) and end (B) pins, or type addresses.",
@@ -99,6 +100,7 @@ const dict = {
     "title.save": "Anahtarı kaydet",
     "title.delete": "Kayıtlı anahtarı sil",
     "placeholder": "Bir rota seçtiğinde Street View burada görünür",
+    "jumping": "Atlanıyor...",
 
     "routeOption": "Rota {n}: {km} km, {min} dk",
     "st.hint": "Başlangıç (A) ve varış (B) işaretlerini koymak için haritaya tıkla veya adres yaz.",
