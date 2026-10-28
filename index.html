@@ -71,8 +71,12 @@
       <div id="splitter" role="separator" aria-orientation="vertical" tabindex="0" class="hidden md:flex items-center justify-center cursor-col-resize touch-none group focus:outline-none">
         <div class="w-1 h-12 rounded-full bg-slate-700 group-hover:bg-sky-500 group-focus-visible:bg-sky-500 transition"></div>
       </div>
-      <div class="relative rounded-lg overflow-hidden bg-slate-900">
+      <div id="pano-wrap" class="relative rounded-lg overflow-hidden bg-slate-900">
         <div id="pano" class="absolute inset-0"></div>
+        <button id="fullscreen" type="button" data-i18n-title="fullscreen" data-i18n-aria="fullscreen" title="Full screen" aria-label="Full screen" class="absolute top-3 right-3 z-10 rounded-md bg-slate-900/80 p-2 text-white hover:bg-slate-700">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+        <div id="minimap" hidden class="absolute bottom-3 left-3 z-10 w-72 h-52 rounded-lg overflow-hidden border border-slate-600 shadow-lg"></div>
         <div id="jump-spinner" hidden class="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/40 pointer-events-none">
           <div class="flex items-center gap-3 rounded-lg bg-slate-900/90 px-4 py-2 text-white">
             <svg class="w-5 h-5 animate-spin text-sky-400" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>

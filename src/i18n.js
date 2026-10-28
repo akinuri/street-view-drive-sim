@@ -38,6 +38,7 @@ const dict = {
     "title.delete": "Delete saved key",
     "placeholder": "Street View appears here once you pick a route",
     "jumping": "Jumping...",
+    "fullscreen": "Full screen",
     "rotate": "Rotate map",
     "title.rotate": "Keep the direction of travel pointing up on the map",
 
@@ -103,6 +104,7 @@ const dict = {
     "title.delete": "Kayıtlı anahtarı sil",
     "placeholder": "Bir rota seçtiğinde Street View burada görünür",
     "jumping": "Atlanıyor...",
+    "fullscreen": "Tam ekran",
     "rotate": "Haritayı döndür",
     "title.rotate": "Gidiş yönünü haritada hep yukarı tut",
 

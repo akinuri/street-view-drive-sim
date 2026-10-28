@@ -229,7 +229,7 @@ async function init() {
     return;
   }
   map = new google.maps.Map($("map"), { ...homeView, disableDefaultUI: true, zoomControl: true, mapId: "DEMO_MAP_ID", renderingType: google.maps.RenderingType.VECTOR });
-  pano = new google.maps.StreetViewPanorama($("pano"), { addressControl: false, motionTracking: false, zoom: 1, visible: false });
+  pano = new google.maps.StreetViewPanorama($("pano"), { addressControl: false, fullscreenControl: false, motionTracking: false, zoom: 1, visible: false });
   carIcon = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 6, fillColor: "#d93025", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 };
   marker = new google.maps.Marker({ map, icon: carIcon });
   lookup = makePanoLookup();
@@ -453,6 +453,30 @@ $("rotate-map").addEventListener("change", (e) => {
 });
 
 const splitRoot = $("split-root");
+
+// Fullscreen the Street View pane and move the map into an overlay minimap while it is active.
+const panoWrap = $("pano-wrap");
+const minimap = $("minimap");
+$("fullscreen").addEventListener("click", () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else panoWrap.requestFullscreen?.().catch(() => {});
+});
+document.addEventListener("fullscreenchange", () => {
+  const mapEl = $("map");
+  const full = document.fullscreenElement === panoWrap;
+  if (full) {
+    minimap.hidden = false;
+    minimap.appendChild(mapEl);
+    mapEl.classList.add("w-full", "h-full");
+  } else {
+    minimap.hidden = true;
+    mapEl.classList.remove("w-full", "h-full");
+    splitRoot.prepend(mapEl);
+  }
+  google.maps.event.trigger(map, "resize");
+  google.maps.event.trigger(pano, "resize");
+  if (marker.getPosition()) map.panTo(marker.getPosition());
+});
 const splitter = $("splitter");
 function setSplit(pct) {
   pct = Math.max(15, Math.min(85, pct));
