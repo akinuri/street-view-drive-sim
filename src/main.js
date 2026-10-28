@@ -156,7 +156,7 @@ const playback = new Playback((i, step, playing) => {
   map.panTo(step.position);
   playBtn.textContent = playing ? t("pause") : t("play");
   progressEl.value = String(i);
-  progressLabel.textContent = `${Math.round(step.routeDistanceM)}/${Math.round(walker.totalM)} m`;
+  progressLabel.textContent = `${Math.round(step.routeDistanceM)}/${Math.round(walker.totalM)} m (${Math.round((step.routeDistanceM / walker.totalM) * 100)}%)`;
   positionM = step.routeDistanceM;
   if (!playing) updateUrl();
   topUp(i);
