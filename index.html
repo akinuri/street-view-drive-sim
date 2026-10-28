@@ -6,13 +6,13 @@
     <title>Street View Drive Sim</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
-  <body class="h-screen flex flex-col bg-slate-950 text-slate-100 font-sans text-sm">
+  <body class="min-h-dvh md:h-dvh flex flex-col bg-slate-950 text-slate-100 font-sans text-sm">
     <header class="bg-slate-900 border-b border-slate-800 shadow-lg">
-      <div class="flex flex-wrap items-center gap-x-10 gap-y-2 px-4 py-3">
+      <div class="flex flex-wrap items-center gap-x-6 md:gap-x-10 gap-y-4 md:gap-y-2 px-3 md:px-4 py-3">
         <h1 class="text-base font-semibold tracking-tight text-sky-400">Drive Sim</h1>
-        <form id="route-form" class="flex flex-wrap items-center gap-2">
-          <input id="origin" placeholder="A · Origin (address or click map)" data-i18n-ph="ph.origin" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
-          <input id="destination" placeholder="B · Destination" data-i18n-ph="ph.dest" required class="w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <form id="route-form" class="flex flex-wrap items-center gap-3 md:gap-2 w-full md:w-auto">
+          <input id="origin" placeholder="A · Origin (address or click map)" data-i18n-ph="ph.origin" required class="w-full md:w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <input id="destination" placeholder="B · Destination" data-i18n-ph="ph.dest" required class="w-full md:w-48 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
           <button type="submit" data-i18n="btn.routes" class="rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-3 py-1.5 transition">Get routes</button>
           <button type="button" id="clear-pins" data-i18n="btn.reset" data-i18n-title="title.reset" title="Clear pins, routes and the drive, and start over" class="rounded-md bg-slate-800 hover:bg-slate-700 px-3 py-1.5 transition">Reset</button>
         </form>
@@ -38,8 +38,8 @@
           <button type="button" id="copy-link" hidden title="Copy link to this route" data-i18n-title="title.copy" data-i18n-aria="aria.copy" aria-label="Copy link" class="rounded-md bg-slate-700 hover:bg-slate-600 text-white p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></button>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-x-10 gap-y-2 px-4 pb-3">
-        <div id="controls" class="flex items-center gap-x-8 rounded-lg bg-slate-900 px-3 py-1.5">
+      <div class="flex flex-wrap items-center gap-x-6 md:gap-x-10 gap-y-4 md:gap-y-2 px-3 md:px-4 pb-3">
+        <div id="controls" class="flex flex-wrap items-center gap-x-4 gap-y-4 md:gap-y-2 md:gap-x-8 rounded-lg bg-slate-900 px-3 py-1.5 w-full md:w-auto">
           <div class="flex items-center gap-2">
             <button id="prev" data-i18n="prev" data-i18n-title="title.prev" title="Previous (←)" class="rounded-md px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition">Prev</button>
             <button id="play" data-i18n-title="title.play" title="Play/Pause (Space)" class="min-w-16 rounded-md bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold px-2 py-1 disabled:opacity-40 disabled:cursor-not-allowed transition">Play</button>
@@ -55,19 +55,19 @@
               <option value="2000" data-i18n="speed.2000">2 per s</option>
               <option value="4000" data-i18n="speed.4000">4 per s</option>
             </select></label>
-          <input id="progress" type="range" min="0" max="0" value="0" class="w-56 md:w-72 disabled:opacity-40" />
-          <span id="progress-label" class="tabular-nums text-white min-w-40"></span>
+          <input id="progress" type="range" min="0" max="0" value="0" class="w-full md:w-72 disabled:opacity-40" />
+          <span id="progress-label" class="tabular-nums text-white md:min-w-40"></span>
           <span id="speed-info" class="text-white font-medium min-w-20" data-i18n-title="title.speedinfo" title="Approximate travel speed = jump distance x jumps per second"></span>
         </div>
         <label class="flex items-center gap-2 text-slate-200 cursor-pointer select-none" data-i18n-title="title.rotate" title="Keep the direction of travel pointing up on the map"><input id="rotate-map" type="checkbox" class="peer sr-only" /><span class="relative w-9 h-5 rounded-full bg-slate-700 transition peer-checked:bg-sky-500 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span><span data-i18n="rotate">Rotate map</span></label>
         <span id="status" class="flex-1 min-w-48 text-slate-200"></span>
-        <form id="key-form" class="flex items-center gap-2">
-          <input id="api-key" type="password" autocomplete="off" placeholder="Google Maps API key" data-i18n-ph="ph.key" title="Stored only in this browser (localStorage)" data-i18n-title="title.key" class="w-56 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <form id="key-form" class="flex items-center gap-2 w-full md:w-auto">
+          <input id="api-key" type="password" autocomplete="off" placeholder="Google Maps API key" data-i18n-ph="ph.key" title="Stored only in this browser (localStorage)" data-i18n-title="title.key" class="flex-1 md:flex-none md:w-56  rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />
           <button type="submit" title="Save key" data-i18n-title="title.save" data-i18n-aria="title.save" aria-label="Save key" class="rounded-md bg-emerald-900/60 hover:bg-emerald-800/70 text-emerald-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
           <button type="button" id="delete-key" hidden title="Delete saved key" data-i18n-title="title.delete" data-i18n-aria="title.delete" aria-label="Delete saved key" class="rounded-md bg-red-900/60 hover:bg-red-800/70 text-red-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button>
         </form>
       </div>
-    </header><main id="split-root" class="flex-1 min-h-0 grid grid-cols-1 grid-rows-2 gap-1 p-1 md:grid-rows-1 md:gap-0 md:grid-cols-[var(--split,50%)_8px_minmax(0,1fr)]">
+    </header><main id="split-root" class="md:flex-1 min-h-0 grid grid-cols-1 grid-rows-[50dvh_50dvh] gap-1 p-1 pb-8 md:pb-1 md:grid-rows-1 md:gap-0 md:grid-cols-[var(--split,50%)_8px_minmax(0,1fr)]">
       <div id="map" class="rounded-lg overflow-hidden bg-slate-900"></div>
       <div id="splitter" role="separator" aria-orientation="vertical" tabindex="0" class="hidden md:flex items-center justify-center cursor-col-resize touch-none group focus:outline-none">
         <div class="w-1 h-12 rounded-full bg-slate-700 group-hover:bg-sky-500 group-focus-visible:bg-sky-500 transition"></div>
@@ -77,7 +77,7 @@
         <button id="fullscreen" type="button" data-i18n-title="fullscreen" data-i18n-aria="fullscreen" title="Full screen" aria-label="Full screen" class="absolute top-3 right-3 z-10 rounded-md bg-slate-900/80 p-2 text-white hover:bg-slate-700">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
         </button>
-        <div id="minimap" hidden class="absolute bottom-3 left-3 z-10 w-72 h-52 rounded-lg overflow-hidden border border-slate-600 shadow-lg"></div>
+        <div id="minimap" hidden class="absolute bottom-3 left-3 z-10 w-40 h-32 md:w-72 md:h-52 rounded-lg overflow-hidden border border-slate-600 shadow-lg"></div>
         <div id="jump-spinner" hidden class="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/40 pointer-events-none">
           <div class="flex items-center gap-3 rounded-lg bg-slate-900/90 px-4 py-2 text-white">
             <svg class="w-5 h-5 animate-spin text-sky-400" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
