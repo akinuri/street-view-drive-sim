@@ -65,8 +65,11 @@
           <button type="button" id="delete-key" hidden title="Delete saved key" data-i18n-title="title.delete" data-i18n-aria="title.delete" aria-label="Delete saved key" class="rounded-md bg-red-900/60 hover:bg-red-800/70 text-red-300 p-2 transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button>
         </form>
       </div>
-    </header><main class="flex-1 min-h-0 grid grid-cols-1 grid-rows-2 md:grid-rows-1 md:grid-cols-2 gap-1 p-1">
+    </header><main id="split-root" class="flex-1 min-h-0 grid grid-cols-1 grid-rows-2 gap-1 p-1 md:grid-rows-1 md:gap-0 md:grid-cols-[var(--split,50%)_8px_minmax(0,1fr)]">
       <div id="map" class="rounded-lg overflow-hidden bg-slate-900"></div>
+      <div id="splitter" role="separator" aria-orientation="vertical" tabindex="0" class="hidden md:flex items-center justify-center cursor-col-resize touch-none group focus:outline-none">
+        <div class="w-1 h-12 rounded-full bg-slate-700 group-hover:bg-sky-500 group-focus-visible:bg-sky-500 transition"></div>
+      </div>
       <div class="relative rounded-lg overflow-hidden bg-slate-900">
         <div id="pano" class="absolute inset-0"></div>
         <div id="jump-spinner" hidden class="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/40 pointer-events-none">

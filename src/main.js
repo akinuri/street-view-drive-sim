@@ -437,6 +437,38 @@ window.addEventListener("keydown", (e) => {
   else if (e.code === "ArrowLeft") playback.step(-1);
 });
 
+const splitRoot = $("split-root");
+const splitter = $("splitter");
+function setSplit(pct) {
+  pct = Math.max(15, Math.min(85, pct));
+  splitRoot.style.setProperty("--split", `${pct}%`);
+  splitter.setAttribute("aria-valuenow", String(Math.round(pct)));
+  if (map) google.maps.event.trigger(map, "resize");
+  if (pano) google.maps.event.trigger(pano, "resize");
+}
+splitter.addEventListener("pointerdown", (e) => {
+  splitter.setPointerCapture(e.pointerId);
+  const move = (ev) => {
+    const r = splitRoot.getBoundingClientRect();
+    setSplit(((ev.clientX - r.left) / r.width) * 100);
+  };
+  const stop = () => {
+    splitter.removeEventListener("pointermove", move);
+    splitter.removeEventListener("pointerup", stop);
+    splitter.removeEventListener("pointercancel", stop);
+  };
+  splitter.addEventListener("pointermove", move);
+  splitter.addEventListener("pointerup", stop);
+  splitter.addEventListener("pointercancel", stop);
+});
+splitter.addEventListener("dblclick", () => setSplit(50));
+splitter.addEventListener("keydown", (e) => {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  e.preventDefault();
+  const cur = parseFloat(splitRoot.style.getPropertyValue("--split")) || 50;
+  setSplit(cur + (e.key === "ArrowRight" ? 2 : -2));
+});
+
 setReady(false);
 updateSpeedInfo();
 const langEl = $("lang");
