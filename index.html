@@ -58,6 +58,7 @@
           <span id="progress-label" class="tabular-nums text-white min-w-16"></span>
           <span id="speed-info" class="text-white font-medium min-w-20" data-i18n-title="title.speedinfo" title="Approximate travel speed = jump distance x jumps per second"></span>
         </div>
+        <label class="flex items-center gap-2 text-slate-200 cursor-pointer select-none" data-i18n-title="title.rotate" title="Keep the direction of travel pointing up on the map"><input id="rotate-map" type="checkbox" class="peer sr-only" /><span class="relative w-9 h-5 rounded-full bg-slate-700 transition peer-checked:bg-sky-500 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-400 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span><span data-i18n="rotate">Rotate map</span></label>
         <span id="status" class="flex-1 min-w-48 text-slate-200"></span>
         <form id="key-form" class="flex items-center gap-2">
           <input id="api-key" type="password" autocomplete="off" placeholder="Google Maps API key" data-i18n-ph="ph.key" title="Stored only in this browser (localStorage)" data-i18n-title="title.key" class="w-56 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 placeholder-white/40 text-white focus:outline-none focus:ring-2 focus:ring-sky-500" />

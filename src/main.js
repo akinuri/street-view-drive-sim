@@ -24,6 +24,8 @@ let currentPano = "";
 let needZoom = false;
 let pendingRoute = null;
 let jumpToken = 0;
+let rotateMap = false; // keep the direction of travel pointing up on the map
+let lastHeading = 0;
 let positionM = 0; // metres along the selected route, shared via the URL
 let carIcon;
 const DEFAULT_VIEW = { center: { lat: 40.7579747, lng: -73.9881175 }, zoom: 14 }; // Times Square
@@ -108,6 +110,7 @@ function resetAll() {
   progressEl.value = "0";
   progressLabel.textContent = "";
   marker.setPosition(null);
+  map.setHeading(0);
   map.setCenter(homeView.center);
   map.setZoom(homeView.zoom);
   pano.setVisible(false);
@@ -146,7 +149,9 @@ const playback = new Playback((i, step, playing) => {
   }
   pano.setPov({ heading: step.heading, pitch: 0 });
   marker.setPosition(step.position);
-  marker.setIcon({ ...carIcon, rotation: step.heading });
+  marker.setIcon({ ...carIcon, rotation: rotateMap ? 0 : step.heading });
+  lastHeading = step.heading;
+  if (rotateMap) map.setHeading(step.heading);
   if (needZoom) { map.setZoom(17); needZoom = false; }
   map.panTo(step.position);
   playBtn.textContent = playing ? t("pause") : t("play");
@@ -222,7 +227,7 @@ async function init() {
     status(e.message, true);
     return;
   }
-  map = new google.maps.Map($("map"), { ...homeView, disableDefaultUI: true, zoomControl: true });
+  map = new google.maps.Map($("map"), { ...homeView, disableDefaultUI: true, zoomControl: true, mapId: "DEMO_MAP_ID", renderingType: google.maps.RenderingType.VECTOR });
   pano = new google.maps.StreetViewPanorama($("pano"), { addressControl: false, motionTracking: false, zoom: 1, visible: false });
   carIcon = { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 6, fillColor: "#d93025", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 };
   marker = new google.maps.Marker({ map, icon: carIcon });
@@ -269,7 +274,9 @@ async function previewStart(index, atM = 0) {
   const heading = route.headingAt(atM);
   if (atM > 0) {
     marker.setPosition(at);
-    marker.setIcon({ ...carIcon, rotation: heading });
+    marker.setIcon({ ...carIcon, rotation: rotateMap ? 0 : heading });
+    lastHeading = heading;
+    if (rotateMap) map.setHeading(heading);
   }
   let found = null;
   try { found = await lookup(at, 50); } catch { /* preview is best-effort */ }
@@ -435,6 +442,13 @@ window.addEventListener("keydown", (e) => {
   if (e.code === "Space") { e.preventDefault(); playback.toggle(); }
   else if (e.code === "ArrowRight") playback.step(1);
   else if (e.code === "ArrowLeft") playback.step(-1);
+});
+
+$("rotate-map").addEventListener("change", (e) => {
+  rotateMap = e.target.checked;
+  if (!map) return;
+  map.setHeading(rotateMap ? lastHeading : 0);
+  if (marker.getPosition()) marker.setIcon({ ...carIcon, rotation: rotateMap ? 0 : lastHeading });
 });
 
 const splitRoot = $("split-root");
