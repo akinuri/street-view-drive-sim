@@ -49,7 +49,8 @@ export class Route {
       const t = Math.max(0, Math.min(1, (px * bx + py * by) / len2));
       const proj = { lat: a.lat + (b.lat - a.lat) * t, lng: a.lng + (b.lng - a.lng) * t };
       const off = distance(p, proj);
-      if (off < best.offsetM) best = { distAlongM: this.cum[i - 1] + t * (this.cum[i] - this.cum[i - 1]), offsetM: off };
+      const cross = bx * py - by * px; // > 0: p is left of the travel direction
+      if (off < best.offsetM) best = { distAlongM: this.cum[i - 1] + t * (this.cum[i] - this.cum[i - 1]), offsetM: off, leftM: cross > 0 ? off : -off };
     }
     return best;
   }
@@ -129,7 +130,7 @@ const angleDiff = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
  * Lazy: returns immediately; call extend(n) to walk further. Nothing is fetched until asked.
  */
 export function createWalker(path, lookup, getPano, opts = {}) {
-  const o = { searchRadiusM: 30, maxRouteOffsetM: 25, maxHeadingDiff: 60, maxChain: 5000, jumpM: 0, ...opts };
+  const o = { searchRadiusM: 30, maxRouteOffsetM: 25, maxHeadingDiff: 60, maxLeftM: 6, maxChain: 5000, jumpM: 0, ...opts };
   const route = new Route(path);
   const steps = []; // kept steps, grows as the walker extends
   const gaps = [];
@@ -149,14 +150,17 @@ export function createWalker(path, lookup, getPano, opts = {}) {
       }
     }
   };
-  const accept = (info, fromD, rangeM = 150) => {
+  const accept = (info, fromD, rangeM = 150, lenient = false) => {
     if (!info || seen.has(info.id)) return null;
     const proj = route.project(info.position, Math.max(0, fromD - 5), fromD + rangeM);
-    return proj.offsetM <= o.maxRouteOffsetM && proj.distAlongM > fromD ? proj : null;
+    if (proj.offsetM > o.maxRouteOffsetM || proj.distAlongM <= fromD) return null;
+    // Right-hand traffic: a panorama clearly left of the route is on the opposite carriageway.
+    if (!lenient && proj.leftM > o.maxLeftM) return null;
+    return proj;
   };
 
   // Probe ahead along the route for any panorama to (re)start from.
-  const findAhead = async (fromD, rangeM = 200) => {
+  const findAhead = async (fromD, rangeM = 200, lenient = false) => {
     const step = rangeM > 200 ? 40 : 20;
     const probes = [];
     for (let p = Math.max(0, fromD); p <= Math.min(route.total, fromD + rangeM); p += step) probes.push(p);
@@ -167,7 +171,7 @@ export function createWalker(path, lookup, getPano, opts = {}) {
       for (const base of bases) {
         if (!base) continue;
         const info = await safe(() => getPano(base.id));
-        const proj = accept(info, fromD, rangeM - 50);
+        const proj = accept(info, fromD, rangeM - 50, lenient);
         if (proj) return { info, proj };
       }
     }
@@ -190,7 +194,7 @@ export function createWalker(path, lookup, getPano, opts = {}) {
   const advance = async () => {
     if (!started) {
       started = true;
-      const first = (await findAhead(startM - 1)) ?? (await findAhead(startM - 1, 1500));
+      const first = (await findAhead(startM - 1)) ?? (await findAhead(startM - 1, 200, true)) ?? (await findAhead(startM - 1, 1500, true));
       if (!first) { gaps.push({ fromM: 0, toM: route.total }); return finish(); }
       push(first.info, first.proj);
       cur = first.info;
@@ -212,7 +216,7 @@ export function createWalker(path, lookup, getPano, opts = {}) {
     }
 
     if (!next) {
-      next = (await findAhead(d + 1)) ?? (await findAhead(d + 1, 1500));
+      next = (await findAhead(d + 1)) ?? (await findAhead(d + 1, 200, true)) ?? (await findAhead(d + 1, 1500, true));
       if (!next) { gaps.push({ fromM: d, toM: route.total }); return finish(); }
       gaps.push({ fromM: d, toM: next.proj.distAlongM });
     }
