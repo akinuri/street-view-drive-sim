@@ -307,6 +307,14 @@ async function jumpTo(latLng) {
   const spinner = $("jump-spinner");
   const target = new Route(routes[selectedRoute].path).project({ lat: latLng.lat(), lng: latLng.lng() }, 0, Infinity).distAlongM;
   const token = ++jumpToken;
+  const loaded = w.steps;
+  // Outside (or far beyond) what is loaded: restart the walk at the click instead of walking every panorama in between.
+  if (target < loaded[0].routeDistanceM || (!w.done && target > loaded[loaded.length - 1].routeDistanceM + 600)) {
+    spinner.hidden = false;
+    try { await prepare(selectedRoute, target); }
+    finally { if (token === jumpToken) spinner.hidden = true; }
+    return;
+  }
   spinner.hidden = false;
   try {
     while (!w.done && w.steps[w.steps.length - 1].routeDistanceM < target) {
@@ -339,7 +347,7 @@ function drawRoutes(selected = 0, atM = 0) {
   selectRoute(selected, atM);
 }
 
-async function prepare(index) {
+async function prepare(index, startM = 0) {
   abort?.abort();
   playback.pause();
   setReady(false);
@@ -348,6 +356,7 @@ async function prepare(index) {
   try {
     walker = createWalker(routes[index].path, lookup, getPano, {
       jumpM: Number($("density").value),
+      startM,
       signal: ctrl.signal,
     });
     status("st.finding");

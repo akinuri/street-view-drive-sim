@@ -134,6 +134,7 @@ export function createWalker(path, lookup, getPano, opts = {}) {
   const steps = []; // kept steps, grows as the walker extends
   const gaps = [];
   const seen = new Set();
+  const startM = Math.max(0, opts.startM ?? 0); // begin the walk here instead of at the route start
   let chainCount = 0, lastChain = null, cur = null, d = 0;
   let started = false, done = false, busy = null;
 
@@ -189,7 +190,7 @@ export function createWalker(path, lookup, getPano, opts = {}) {
   const advance = async () => {
     if (!started) {
       started = true;
-      const first = await findAhead(-1);
+      const first = (await findAhead(startM - 1)) ?? (await findAhead(startM - 1, 1500));
       if (!first) { gaps.push({ fromM: 0, toM: route.total }); return finish(); }
       push(first.info, first.proj);
       cur = first.info;
